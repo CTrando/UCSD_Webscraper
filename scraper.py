@@ -6,7 +6,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
-
+from settings import DEPARTMENT
 HTML_STORAGE = 'classes'
 
 os.chdir('C:/Users/ctran/Downloads/chromedriver')
@@ -42,7 +42,7 @@ try:
     class_search = WebDriverWait(browser, 200).until(EC.presence_of_element_located
                                                      ((By.ID, 's2id_autogen1')))
     class_search.click()
-    class_search.send_keys('CSE')
+    class_search.send_keys(DEPARTMENT)
     class_search.send_keys(Keys.RETURN)
 
 except Exception as e:
@@ -70,7 +70,7 @@ for page in pages:
     except Exception as e:
         print(e)
         html = browser.page_source
-        file = open(os.path.join(os.curdir, HTML_STORAGE, 'CSE', page.text+'.html'), 'w')
+        file = open(os.path.join(os.curdir, HTML_STORAGE, DEPARTMENT, page.text+'.html'), 'w')
         print(pprint.pformat(html))
         file.write(html)
         print(file.name)

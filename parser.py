@@ -1,8 +1,9 @@
-import bs4, os, sqlite3, re
+import bs4, os, sqlite3
+from settings import DEPARTMENT
 
 HTML_STORAGE = 'classes'
 
-dir = os.path.join(os.curdir, HTML_STORAGE, 'CSE')
+dir = os.path.join(os.curdir, HTML_STORAGE, DEPARTMENT)
 os.chdir(dir)
 buffer_buffer = []
 buffer = []
@@ -49,11 +50,11 @@ for root, dirs, files in os.walk(os.curdir):
 os.chdir('C:/Users/ctran/PycharmProjects/UCSD_Webscraper')
 connection = sqlite3.connect('data.db')
 cursor = connection.cursor()
-cursor.execute("DROP TABLE CLASSES")
-cursor.execute("CREATE TABLE CLASSES" +
-               "  (ID INTEGER PRIMARY KEY, COURSE_NUM real, COURSE_ID text, TYPE text, DAYS text, TIME text, LOCATION text, ROOM text, INSTRUCTOR text, DESCRIPTION text)")
+cursor.execute("CREATE TABLE IF NOT EXISTS CLASSES" +
+               "  (ID INTEGER PRIMARY KEY, COURSE_NUM real, COURSE_ID text, TYPE text, DAYS text, TIME text, LOCATION text, ROOM text, INSTRUCTOR text, DESCRIPTION text," +
+               "UNIQUE(COURSE_NUM, COURSE_ID, TYPE, DAYS, TIME, LOCATION, ROOM, INSTRUCTOR, DESCRIPTION))")
 
 for vals in buffer_buffer:
-    cursor.execute("INSERT INTO CLASSES VALUES(?,?,?,?,?,?,?,?, ?, ?)", vals)
+    cursor.execute("INSERT OR IGNORE INTO CLASSES VALUES(?,?,?,?,?,?,?,?, ?, ?)", vals)
 connection.commit()
 connection.close()

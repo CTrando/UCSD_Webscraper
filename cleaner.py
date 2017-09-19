@@ -23,6 +23,12 @@ class ClassHolder:
         return None
 
     @staticmethod
+    def is_canceled(row):
+        if 'cancelled' in row:
+            return True
+        return False
+
+    @staticmethod
     def insert_discussion(course_num, discussion_id):
         r_cursor.execute("UPDATE DATA SET DISCUSSION_KEY = ? WHERE COURSE_NUM = ? AND DISCUSSION_KEY IS NULL",
                          (discussion_id, course_num))
@@ -45,9 +51,11 @@ database = sqlite3.connect('data.db')
 cursor = database.cursor()
 cursor.execute("SELECT DISTINCT COURSE_NUM FROM CLASSES")
 for num in cursor.fetchall():
-    cursor.execute("SELECT ID, COURSE_ID, TYPE FROM CLASSES WHERE COURSE_NUM = ?", num)
+    cursor.execute("SELECT ID, COURSE_ID, DAYS, TYPE FROM CLASSES WHERE COURSE_NUM = ?", num)
     for thing in cursor.fetchall():
         print(thing)
+        if ClassHolder.is_canceled(thing):
+            continue
         if ClassHolder.get_type(thing) == 'LE':
             new_class = ClassHolder()
             new_class.course_num = num[0]

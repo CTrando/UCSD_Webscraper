@@ -1,6 +1,8 @@
 import random
 import sqlite3, numpy
 
+from utils import TimeInterval
+
 database = sqlite3.connect('real_data.db')
 database.row_factory = sqlite3.Row
 cursor = database.cursor()
@@ -12,6 +14,7 @@ class_cursor = class_database.cursor()
 
 class ClassPicker():
     best_candidate = 0
+    candidates = []
 
     def __init__(self, class_set):
         self.class_set = class_set
@@ -21,6 +24,7 @@ class ClassPicker():
 
     def _pick_classes(self, r, w_set):
         if r >= len(self.class_set):
+            self.candidates.append(w_set)
             self.best_candidate = max(self.get_fitness(w_set), self.best_candidate)
             return
 
@@ -31,9 +35,8 @@ class ClassPicker():
                 self._pick_classes(r + 1, c_set)
 
     def get_fitness(self, class_set):
-        thing = random.randint(0,10)
+        thing = random.randint(0, 10)
         return thing
-
 
 
 class Class:
@@ -62,7 +65,9 @@ class Class:
             return True
 
     def overlaps(self, choice):
-        return False
+        my_lecture_interval = TimeInterval(self.lecture.days, self.lecture.times)
+        choice_interval = TimeInterval(choice.lecture.days, choice.lecture.times)
+        return my_lecture_interval.overlaps(choice_interval)
 
     def __str__(self):
         return str(self.lecture)
@@ -83,7 +88,8 @@ class Lecture:
         self.description = data['DESCRIPTION']
 
     def __str__(self):
-        return self.course_num + self.course_id + self.type + self.days + self.instructor + self.description
+        list = self.course_num, self.course_id, self.type, self.times, self.days, self.instructor, self.description
+        return ' '.join(list)
 
 
 class Lab:
@@ -133,8 +139,8 @@ class Final:
 
 
 input = input('Enter the classes that you want like so (CSE 3, CSE 8A, CSE 8B)')
-# pref_classes = input.split(', ')
-pref_classes = ['CSE 3', 'CSE 8A', 'CSE 8B']
+pref_classes = input.split(', ')
+#pref_classes = ['CSE 3', 'CSE 8A', 'CSE 8B']
 
 class_set = []
 
@@ -149,4 +155,7 @@ for pref_class in pref_classes:
 
 pick = ClassPicker(class_set)
 pick.pick_classes()
-print(pick.best_candidate)
+for candidate in pick.candidates:
+    for can in candidate:
+        print('[' + str(can), end='] ')
+    print()
