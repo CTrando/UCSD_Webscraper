@@ -3,13 +3,9 @@ import sqlite3, numpy
 
 from utils import TimeInterval
 
-database = sqlite3.connect('real_data.db')
+database = sqlite3.connect('data.db')
 database.row_factory = sqlite3.Row
 cursor = database.cursor()
-
-class_database = sqlite3.connect('data.db')
-class_database.row_factory = sqlite3.Row
-class_cursor = class_database.cursor()
 
 
 class ClassPicker():
@@ -37,6 +33,19 @@ class ClassPicker():
     def get_fitness(self, class_set):
         thing = random.randint(0, 10)
         return thing
+
+    def filter_by_days(self, class_set, str_days):
+        ret_list = []
+        for row in class_set:
+            list = []
+            for col in row:
+                lec = col.lecture
+                if lec.is_in_days(str_days):
+                    list.append(col)
+            ret_list.append(list)
+        return ret_list
+
+
 
 
 class Class:
@@ -75,8 +84,8 @@ class Class:
 
 class Lecture:
     def __init__(self, id):
-        class_cursor.execute("SELECT * FROM CLASSES WHERE ID = ?", (id,))
-        data = class_cursor.fetchone()
+        cursor.execute("SELECT * FROM CLASSES WHERE ID = ?", (id,))
+        data = cursor.fetchone()
         self.course_num = data['COURSE_NUM']
         self.course_id = data['COURSE_ID']
         self.type = data['TYPE']
@@ -91,11 +100,14 @@ class Lecture:
         list = self.course_num, self.course_id, self.type, self.times, self.days, self.instructor, self.description
         return ' '.join(list)
 
+    def is_in_days(self, str_days):
+        return self.days in str_days
+
 
 class Lab:
     def __init__(self, id):
-        class_cursor.execute("SELECT * FROM CLASSES WHERE ID = ?", (id,))
-        data = class_cursor.fetchone()
+        cursor.execute("SELECT * FROM CLASSES WHERE ID = ?", (id,))
+        data = cursor.fetchone()
         self.course_num = data['COURSE_NUM']
         self.type = data['TYPE']
         self.days = data['DAYS']
@@ -110,8 +122,8 @@ class Lab:
 
 class Discussion:
     def __init__(self, id):
-        class_cursor.execute("SELECT * FROM CLASSES WHERE ID = ?", (id,))
-        data = class_cursor.fetchone()
+        cursor.execute("SELECT * FROM CLASSES WHERE ID = ?", (id,))
+        data = cursor.fetchone()
         self.course_num = data['COURSE_NUM']
         self.type = data['TYPE']
         self.days = data['DAYS']
@@ -126,8 +138,8 @@ class Discussion:
 
 class Final:
     def __init__(self, id):
-        class_cursor.execute("SELECT * FROM CLASSES WHERE ID = ?", (id,))
-        data = class_cursor.fetchone()
+        cursor.execute("SELECT * FROM CLASSES WHERE ID = ?", (id,))
+        data = cursor.fetchone()
         self.course_num = data['COURSE_NUM']
         self.times = data['TIME']
         self.location = data['LOCATION']
@@ -138,8 +150,8 @@ class Final:
         return self.course_num + self.description
 
 
-input = input('Enter the classes that you want like so (CSE 3, CSE 8A, CSE 8B)')
-pref_classes = input.split(', ')
+my_input = input('Enter the classes that you want like so (CSE 3, CSE 8A, CSE 8B)')
+pref_classes = my_input.split(', ')
 #pref_classes = ['CSE 3', 'CSE 8A', 'CSE 8B']
 
 class_set = []
