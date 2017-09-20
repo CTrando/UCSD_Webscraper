@@ -82,10 +82,10 @@ class Scraper:
             except Exception:
                 print('I should be moving to the next page now.')
                 html = self.browser.page_source
-                self.add_page(html, page.text)
+                self.store_page(html, page.text)
                 pass
 
-    def add_page(self, page_contents, num_str):
+    def store_page(self, page_contents, num_str):
         if not os.path.exists(self.dir_path):
             os.makedirs(self.dir_path)
 
