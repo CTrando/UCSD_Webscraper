@@ -1,5 +1,5 @@
-import random
 import sqlite3
+
 from classutils import *
 
 MORNING_INTERVAL = TimeInterval(None, '8:00a-12:00p')
@@ -26,6 +26,13 @@ class ClassPicker():
     def get_input(self):
         my_input = input('Enter the classes that you want like so (CSE 3, CSE 8A, CSE 8B)')
         self.pref_classes = my_input.split(', ')
+        self.validate_inputs()
+
+    def validate_inputs(self):
+        for pref_class in self.pref_classes:
+            self.cursor.execute("SELECT ID FROM DATA WHERE COURSE_NUM = ?", (pref_class,))
+            if not len(self.cursor.fetchall()) > 0:
+                raise IOError('One of the inputs is not a valid class name')
 
     def generate_class_set(self):
         for pref_class in self.pref_classes:
@@ -40,10 +47,6 @@ class ClassPicker():
             self.class_set.append(pref_class_versions)
 
     def get_output(self):
-        # for candidate_list in self.candidates:
-        #     for candidate in candidate_list:
-        #         print('[' + str(candidate) + ']')
-        #     print('*'*10)
         print(self.best_candidate_score)
         print('*' * 10)
         for cl in self.best_candidate:

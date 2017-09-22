@@ -60,12 +60,14 @@ class TimeInterval:
         one = abs((my_start - other_end)).total_seconds()/3600
         two = abs((my_end - other_start).total_seconds()/3600)
 
-        return min(3, min(one, two))
+        return min(5, min(one, two))
 
 
 class DefaultTimeInterval(TimeInterval):
     def __init__(self):
-        super().__init__([], '')
+        super().__init__(None, None)
+        self.days = []
+        self.times = []
 
     def overlaps_times(self, other):
         return False

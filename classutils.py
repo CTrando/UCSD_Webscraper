@@ -96,16 +96,6 @@ class Class(ClassTemplate):
     def __str__(self):
         return str(self.lecture) + ' ' + str(self.discussion) + ' ' + str(self.lab) + ' ' + str(self.final)
 
-        # def distance_from(self, **kwargs):
-        #     if 'time_choice' in kwargs and kwargs['time_choice']:
-        #         choice_interval = kwargs['time_choice']
-        #         return self.lecture_interval.distance_from(choice_interval)
-        # else:
-        #     choice = kwargs['choice']
-        #     return self.lecture_interval.overlaps_times_and_days(choice.lecture_intervals) \
-        #            and self.discussion_interval.overlaps_times_and_days(choice.discussion_interval) \
-        #            and self.lab_interval.overlaps_times_and_days(choice.lab_interval)
-
 
 class Lecture(ClassTemplate):
     def __init__(self, cursor, ID):
