@@ -1,4 +1,4 @@
-import class_picker
+import classpicker
 import scraper
 import data_parser
 import data_cleaner
@@ -10,5 +10,5 @@ if __name__ == '__main__':
     # cleaner = data_cleaner.Cleaner()
     # cleaner.clean()
 
-    picker = class_picker.ClassPicker()
+    picker = classpicker.ClassPicker()
     picker.pick()

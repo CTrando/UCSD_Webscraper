@@ -1,6 +1,9 @@
 import random
 import sqlite3
-from utils import *
+from classutils import *
+
+MORNING_INTERVAL = TimeInterval(None, '8:00a-12:00p')
+
 
 class ClassPicker():
     def __init__(self):
@@ -11,7 +14,8 @@ class ClassPicker():
         self.class_set = []
         self.pref_classes = []
         self.candidates = []
-        self.best_candidate = 0
+        self.best_candidate = None
+        self.best_candidate_score = 0
 
     def pick(self):
         self.get_input()
@@ -36,10 +40,15 @@ class ClassPicker():
             self.class_set.append(pref_class_versions)
 
     def get_output(self):
-        for candidate_list in self.candidates:
-            for candidate in candidate_list:
-                print('[' + str(candidate) + ']')
-            print('*'*10)
+        # for candidate_list in self.candidates:
+        #     for candidate in candidate_list:
+        #         print('[' + str(candidate) + ']')
+        #     print('*'*10)
+        print(self.best_candidate_score)
+        print('*' * 10)
+        for cl in self.best_candidate:
+            print(str(cl))
+        print('*' * 10)
 
     def get_candidates(self):
         self._get_candidates(0, [])
@@ -47,7 +56,9 @@ class ClassPicker():
     def _get_candidates(self, r, w_set):
         if r >= len(self.class_set):
             self.candidates.append(w_set)
-            self.best_candidate = max(self.get_fitness(w_set), self.best_candidate)
+            if self.get_fitness(w_set) > self.best_candidate_score:
+                self.best_candidate_score = self.get_fitness(w_set)
+                self.best_candidate = w_set
             return
 
         for c in range(0, len(self.class_set[r])):
@@ -57,8 +68,12 @@ class ClassPicker():
                 self._get_candidates(r + 1, c_set)
 
     def get_fitness(self, class_set):
-        thing = random.randint(0, 10)
-        return thing
+        score = 1
+        for cl in class_set:
+            if not cl.overlaps_times(MORNING_INTERVAL):
+                score -= .1 * cl.distance_from_interval(MORNING_INTERVAL)
+
+        return score
 
     def filter_by_days(self, class_set, str_days):
         ret_list = []
