@@ -52,6 +52,14 @@ class Class(ClassTemplate):
         if self.data['FINAL_KEY']:
             self.final = Final(cursor, self.data['FINAL_KEY'])
 
+        self.subclasses = []
+        if self.lab:
+            self.subclasses.append(self.lab)
+        if self.lecture:
+            self.subclasses.append(self.lecture)
+        if self.discussion:
+            self.subclasses.append(self.discussion)
+
     def is_valid(self, w_set):
         if len(w_set) == 0:
             return True
@@ -73,14 +81,10 @@ class Class(ClassTemplate):
 
     def overlaps_times_and_days(self, choice):
         flag = False
-        if self.lecture and choice.lecture and self.lecture.overlaps_times_and_days(choice.lecture):
-            flag = True
-        if self.discussion and choice.discussion and self.discussion.overlaps_times_and_days(choice.discussion):
-            flag = True
-        if self.lab and choice.lab and self.lab.overlaps_times_and_days(choice.lab):
-            flag = True
-        if self.final and choice.final and self.final.overlaps_times_and_days(choice.final):
-            flag = True
+        for self_cl in self.subclasses:
+            for choice_cl in choice.subclasses:
+                if self_cl.overlaps_times_and_days(choice_cl):
+                    flag = True
         return flag
 
     def distance_from_interval(self, other):

@@ -29,6 +29,7 @@ class ClassHolder:
 
     @staticmethod
     def insert_discussion(cursor, course_num, discussion_id):
+        # TODO update for only one discussion
         cursor.execute('UPDATE DATA SET DISCUSSION_KEY = ? WHERE COURSE_NUM = ? AND DISCUSSION_KEY IS NULL',
                        (discussion_id, course_num))
 
@@ -67,7 +68,8 @@ class Cleaner:
 
     def create_links(self):
         self.cursor.execute("SELECT DISTINCT COURSE_NUM FROM CLASSES")
-        for course_num in self.cursor.fetchall():
+        class_list = self.cursor.fetchall()
+        for course_num in class_list:
             self.cursor.execute("SELECT ID, COURSE_ID, DAYS, TYPE "
                                 "FROM CLASSES WHERE COURSE_NUM = ?",
                                 course_num)

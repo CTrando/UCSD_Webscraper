@@ -2,7 +2,7 @@ import sqlite3
 
 from classutils import *
 
-MORNING_INTERVAL = TimeInterval(None, '8:00a-12:00p')
+MORNING_INTERVAL = TimeInterval(None, '2:00p-8:00p')
 
 
 class ClassPicker():
