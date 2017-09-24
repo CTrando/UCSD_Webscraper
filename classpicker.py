@@ -2,7 +2,7 @@ import sqlite3
 
 from classutils import *
 
-MORNING_INTERVAL = TimeInterval(None, '2:00p-8:00p')
+INTERVAL = TimeInterval(None, '2:00p-8:00p')
 
 
 class ClassPicker():
@@ -71,10 +71,12 @@ class ClassPicker():
                 self._get_candidates(r + 1, c_set)
 
     def get_fitness(self, class_set):
-        score = 1
+        score = .5
         for cl in class_set:
-            if not cl.overlaps_times(MORNING_INTERVAL):
-                score -= .1 * cl.distance_from_interval(MORNING_INTERVAL)
+            if cl.inside_time(INTERVAL):
+                score += 1 / cl.distance_from_interval(INTERVAL)
+            if not cl.overlaps_times(INTERVAL):
+                score -= .1 * cl.distance_from_interval(INTERVAL)
 
         return score
 

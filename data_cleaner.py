@@ -28,19 +28,33 @@ class ClassHolder:
         self.save(cursor)
 
     @staticmethod
-    def insert_discussion(cursor, course_num, discussion_id):
-        # TODO update for only one discussion
-        cursor.execute('UPDATE DATA SET DISCUSSION_KEY = ? WHERE COURSE_NUM = ? AND DISCUSSION_KEY IS NULL',
-                       (discussion_id, course_num))
+    def insert_discussion(cursor, course_num, discussion_key):
+        cursor.execute('SELECT COUNT(1) FROM DATA WHERE COURSE_NUM = ?', (course_num,))
+        num = cursor.fetchone()
+        if num[0] > 0:
+            cursor.execute('UPDATE DATA SET DISCUSSION_KEY = ? WHERE COURSE_NUM = ? AND DISCUSSION_KEY IS NULL',
+                           (discussion_key, course_num))
+        else:
+            cursor.execute('INSERT INTO DATA VALUES(?,?,?,?,?,?)', (None, course_num, None, None, discussion_key, None))
 
     @staticmethod
-    def insert_lab(cursor, course_num, lab_id):
-        cursor.execute('UPDATE DATA SET LAB_KEY = ? WHERE COURSE_NUM = ? AND LAB_KEY IS NULL', (lab_id, course_num))
+    def insert_lab(cursor, course_num, lab_key):
+        cursor.execute('SELECT COUNT(1) FROM DATA WHERE COURSE_NUM = ?', (course_num,))
+        num = cursor.fetchone()
+        if num[0] > 0:
+            cursor.execute('UPDATE DATA SET LAB_KEY = ? WHERE COURSE_NUM = ? AND LAB_KEY IS NULL', (lab_key, course_num))
+        else:
+            cursor.execute('INSERT INTO DATA VALUES(?,?,?,?,?,?)', (None, course_num, None, lab_key, None, None))
 
     @staticmethod
-    def insert_final(cursor, course_num, final_id):
-        cursor.execute('UPDATE DATA SET FINAL_KEY = ? WHERE COURSE_NUM = ? AND FINAL_KEY IS NULL',
-                       (final_id, course_num))
+    def insert_final(cursor, course_num, final_key):
+        cursor.execute('SELECT COUNT(1) FROM DATA WHERE COURSE_NUM = ?', (course_num,))
+        num = cursor.fetchone()
+        if num[0] > 0:
+            cursor.execute('UPDATE DATA SET FINAL_KEY = ? WHERE COURSE_NUM = ? AND FINAL_KEY IS NULL',
+                           (final_key, course_num))
+        else:
+            cursor.execute('INSERT INTO DATA VALUES(?,?,?,?,?,?)', (None, course_num, None, None, None, final_key))
 
     def save(self, cursor):
         cursor.execute('INSERT INTO DATA VALUES(?,?,?,?,?,?)',
@@ -71,7 +85,8 @@ class Cleaner:
         class_list = self.cursor.fetchall()
         for course_num in class_list:
             self.cursor.execute("SELECT ID, COURSE_ID, DAYS, TYPE "
-                                "FROM CLASSES WHERE COURSE_NUM = ?",
+                                "FROM CLASSES WHERE COURSE_NUM = ?"
+                                "ORDER BY ID",
                                 course_num)
 
             '''

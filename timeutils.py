@@ -50,6 +50,19 @@ class TimeInterval:
 
         return (other_start <= my_start <= other_end) or (my_start <= other_start <= my_end)
 
+    def inside_time(self, other):
+        try:
+            my_start = self.times[0]
+            my_end = self.times[1]
+
+            other_start = other.times[0]
+            other_end = other.times[1]
+        except IndexError as e:
+            return False
+        return (other_start <= my_start <= other_end) and (other_start <= my_end <= other_end) or \
+               (my_start <= other_start <= my_end) and (my_start <= other_end <= my_end)
+
+
     def distance_from(self, other):
         my_start = self.times[0]
         my_end = self.times[1]
@@ -60,7 +73,7 @@ class TimeInterval:
         one = abs((my_start - other_end)).total_seconds()/3600
         two = abs((my_end - other_start).total_seconds()/3600)
 
-        return min(5, min(one, two))
+        return min(6, min(one, two))
 
 
 class DefaultTimeInterval(TimeInterval):
@@ -76,5 +89,5 @@ class DefaultTimeInterval(TimeInterval):
         return False
 
     def distance_from(self, other):
-        return 0
+        return 1
 

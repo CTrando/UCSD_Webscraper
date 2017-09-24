@@ -21,6 +21,9 @@ class ClassTemplate:
     def overlaps_times_and_days(self, other):
         return self.interval.overlaps_times_and_days(other.interval)
 
+    def inside_time(self, other):
+        return self.interval.inside_time(other)
+
     def overlaps_times(self, other):
         return self.interval.overlaps_times(other)
 
@@ -70,14 +73,13 @@ class Class(ClassTemplate):
             return True
 
     def overlaps_times(self, choice_times):
-        flag = False
-        if self.lecture and self.lecture.overlaps_times(choice_times):
-            flag = True
-        if self.discussion and self.discussion.overlaps_times(choice_times):
-            flag = True
-        if self.lab and self.lab.overlaps_times(choice_times):
-            flag = True
-        return flag
+        subclasses = []
+        for subclass in self.subclasses:
+            if subclass.overlaps_times(choice_times):
+                subclasses.append(True)
+            else:
+                subclasses.append(False)
+        return all(subclasses)
 
     def overlaps_times_and_days(self, choice):
         flag = False
@@ -86,6 +88,15 @@ class Class(ClassTemplate):
                 if self_cl.overlaps_times_and_days(choice_cl):
                     flag = True
         return flag
+
+    def inside_time(self, choice_times):
+        subclasses = []
+        for subclass in self.subclasses:
+            if subclass.inside_time(choice_times):
+                subclasses.append(True)
+            else:
+                subclasses.append(False)
+        return all(subclasses)
 
     def distance_from_interval(self, other):
         dist = 0
