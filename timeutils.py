@@ -37,17 +37,19 @@ class TimeInterval:
     def overlaps_times_and_days(self, other):
         for day in self.days:
             if day in other.days:
-                if self.overlaps_times(other):
+                if self.overlaps_time(other):
                     return True
         return False
 
-    def overlaps_times(self, other):
-        my_start = self.times[0]
-        my_end = self.times[1]
+    def overlaps_time(self, other):
+        try:
+            my_start = self.times[0]
+            my_end = self.times[1]
 
-        other_start = other.times[0]
-        other_end = other.times[1]
-
+            other_start = other.times[0]
+            other_end = other.times[1]
+        except IndexError as e:
+            return False
         return (other_start <= my_start <= other_end) or (my_start <= other_start <= my_end)
 
     def inside_time(self, other):
@@ -73,7 +75,7 @@ class TimeInterval:
         one = abs((my_start - other_end)).total_seconds()/3600
         two = abs((my_end - other_start).total_seconds()/3600)
 
-        return min(6, min(one, two))
+        return max(1, min(6, min(one, two)))
 
 
 class DefaultTimeInterval(TimeInterval):

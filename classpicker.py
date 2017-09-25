@@ -1,8 +1,7 @@
 import sqlite3
 
 from classutils import *
-
-INTERVAL = TimeInterval(None, '2:00p-8:00p')
+from settings import INTERVALS
 
 
 class ClassPicker():
@@ -15,7 +14,7 @@ class ClassPicker():
         self.pref_classes = []
         self.candidates = []
         self.best_candidate = None
-        self.best_candidate_score = 0
+        self.best_candidate_score = -10000
 
     def pick(self):
         self.get_input()
@@ -72,11 +71,14 @@ class ClassPicker():
 
     def get_fitness(self, class_set):
         score = .5
-        for cl in class_set:
-            if cl.inside_time(INTERVAL):
-                score += 1 / cl.distance_from_interval(INTERVAL)
-            if not cl.overlaps_times(INTERVAL):
-                score -= .1 * cl.distance_from_interval(INTERVAL)
+        for interval in INTERVALS:
+            temp_score = .5
+            for cl in class_set:
+                if cl.inside_time(interval):
+                    temp_score += 1 / cl.distance_from_interval(interval)
+                if not cl.overlaps_time(interval):
+                    temp_score -= .1 * cl.distance_from_interval(interval)
+            score = max(temp_score, score)
 
         return score
 

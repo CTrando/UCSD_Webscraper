@@ -24,8 +24,8 @@ class ClassTemplate:
     def inside_time(self, other):
         return self.interval.inside_time(other)
 
-    def overlaps_times(self, other):
-        return self.interval.overlaps_times(other)
+    def overlaps_time(self, other):
+        return self.interval.overlaps_time(other)
 
     def distance_from_interval(self, other):
         return self.interval.distance_from(other)
@@ -72,41 +72,40 @@ class Class(ClassTemplate):
                     return False
             return True
 
-    def overlaps_times(self, choice_times):
+    def overlaps_time(self, choice_time):
         subclasses = []
         for subclass in self.subclasses:
-            if subclass.overlaps_times(choice_times):
+            if subclass.overlaps_time(choice_time):
                 subclasses.append(True)
             else:
                 subclasses.append(False)
         return all(subclasses)
 
     def overlaps_times_and_days(self, choice):
-        flag = False
         for self_cl in self.subclasses:
             for choice_cl in choice.subclasses:
                 if self_cl.overlaps_times_and_days(choice_cl):
-                    flag = True
-        return flag
+                    return True
+        return False
 
-    def inside_time(self, choice_times):
+    def inside_time(self, choice_time):
         subclasses = []
         for subclass in self.subclasses:
-            if subclass.inside_time(choice_times):
+            if subclass.inside_time(choice_time):
                 subclasses.append(True)
             else:
                 subclasses.append(False)
         return all(subclasses)
 
-    def distance_from_interval(self, other):
+    def distance_from_interval(self, interval):
         dist = 0
-        if self.lecture:
-            dist += self.lecture.distance_from_interval(other)
-        if self.discussion:
-            dist += self.discussion.distance_from_interval(other)
-        if self.lab:
-            dist += self.lab.distance_from_interval(other)
-        return dist
+        if self.lecture and not self.lecture.inside_time(interval):
+            dist += self.lecture.distance_from_interval(interval)
+        if self.discussion and not self.discussion.inside_time(interval):
+            dist += self.discussion.distance_from_interval(interval)
+        if self.lab and not self.lab.inside_time(interval):
+            dist += self.lab.distance_from_interval(interval)
+        return max(1, dist)
 
     def __str__(self):
         return str(self.lecture) + ' ' + str(self.discussion) + ' ' + str(self.lab) + ' ' + str(self.final)
