@@ -1,12 +1,12 @@
 import bs4
 import os
 import sqlite3
-from settings import DEPARTMENT, HTML_STORAGE
+from settings import DEPARTMENTS, HTML_STORAGE
 
 
 class Parser:
     def __init__(self):
-        self.dir = os.path.join(os.curdir, HTML_STORAGE, DEPARTMENT)
+        self.dir = os.path.join(os.curdir, HTML_STORAGE, DEPARTMENTS)
         os.chdir(self.dir)
         self.buffer_buffer = []
         self.buffer = []

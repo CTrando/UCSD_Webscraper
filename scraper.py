@@ -6,7 +6,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 from settings import HTML_STORAGE
-from settings import DEPARTMENT
+from settings import DEPARTMENTS
 
 
 class Scraper:
@@ -26,8 +26,7 @@ class Scraper:
     def scrape(self):
         self.login()
         self.pick_quarter()
-        self.search_department()
-        self.iter_pages()
+        self.iter_departments()
 
     def login(self):
         self.browser.get(self.login_url)
@@ -49,13 +48,19 @@ class Scraper:
         except Exception:
             pass
 
-    def search_department(self):
-        self.dir_path = os.path.join(HTML_STORAGE, DEPARTMENT)
+    def iter_departments(self):
+        for department in DEPARTMENTS:
+            self.search_department(department)
+            self.iter_pages()
+            print('I should be moving to the next department now.')
+
+    def search_department(self, department):
+        self.dir_path = os.path.join(HTML_STORAGE, department)
         try:
             class_search = WebDriverWait(self.browser, 200).until(EC.presence_of_element_located
                                                                   ((By.ID, 's2id_autogen1')))
             class_search.click()
-            class_search.send_keys(DEPARTMENT)
+            class_search.send_keys(department)
             class_search.send_keys(Keys.RETURN)
 
         except Exception as e:
