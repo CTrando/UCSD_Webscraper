@@ -6,7 +6,7 @@ from settings import DEPARTMENTS, HTML_STORAGE
 
 class Parser:
     def __init__(self):
-        self.dir = os.path.join(os.curdir, HTML_STORAGE, DEPARTMENTS)
+        self.dir = os.path.join(os.curdir, HTML_STORAGE)
         os.chdir(self.dir)
         self.buffer_buffer = []
         self.buffer = []
@@ -17,12 +17,13 @@ class Parser:
 
     def parse_data(self):
         for root, dirs, files in os.walk(os.curdir):
-            for file in files:
-                with open(file) as html:
-                    soup = bs4.BeautifulSoup(html, 'lxml')
-                    rows = soup.find_all(name='tr')
-                    for row in rows:
-                        self.parse_row(row)
+            for dir in dirs:
+                for file in os.listdir(dir):
+                    with open(os.path.join(dir, file)) as html:
+                        soup = bs4.BeautifulSoup(html, 'lxml')
+                        rows = soup.find_all(name='tr')
+                        for row in rows:
+                            self.parse_row(row)
 
     def parse_row(self, row):
         header = row.find(name='table', attrs={'id': 'search-group-header-id'})
@@ -67,7 +68,7 @@ class Parser:
 
     def insert_data(self):
         os.chdir('C:/Users/ctran/PycharmProjects/UCSD_Webscraper')
-        connection = sqlite3.connect('data.db')
+        connection = sqlite3.connect('data/data.db')
         cursor = connection.cursor()
         cursor.execute("CREATE TABLE IF NOT EXISTS CLASSES"
                        "(ID INTEGER PRIMARY KEY, COURSE_NUM REAL, COURSE_ID TEXT, "

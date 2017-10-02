@@ -6,7 +6,7 @@ from settings import INTERVALS
 
 class ClassPicker():
     def __init__(self):
-        self.database = sqlite3.connect('data.db')
+        self.database = sqlite3.connect('data/data.db')
         self.database.row_factory = sqlite3.Row
         self.cursor = self.database.cursor()
 
@@ -16,11 +16,14 @@ class ClassPicker():
         self.best_candidate = None
         self.best_candidate_score = -10000
 
-    def pick(self):
-        self.get_input()
+    def pick(self, inputs=None):
+        if not inputs:
+            self.get_input()
+        else:
+            self.pref_classes = inputs
         self.generate_class_set()
         self.get_candidates()
-        self.get_output()
+        return self.get_output()
 
     def get_input(self):
         my_input = input('Enter the classes that you want like so (CSE 3, CSE 8A, CSE 8B)')
@@ -51,6 +54,10 @@ class ClassPicker():
         for cl in self.best_candidate:
             print(str(cl))
         print('*' * 10)
+        return self.best_candidate
+
+    def get_string_output(self):
+        return [str(cl) for cl in self.best_candidate]
 
     def get_candidates(self):
         self._get_candidates(0, [])

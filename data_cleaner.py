@@ -63,7 +63,7 @@ class ClassHolder:
 
 class Cleaner:
     def __init__(self):
-        self.database = sqlite3.connect('data.db')
+        self.database = sqlite3.connect('data/data.db')
         self.cursor = self.database.cursor()
 
     def clean(self):

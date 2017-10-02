@@ -8,7 +8,7 @@ class DepartmentScraper:
         os.chdir('C:/Users/ctran/Downloads/chromedriver')
         self.browser = webdriver.Chrome()
         os.chdir('C:/Users/ctran/PycharmProjects/UCSD_Webscraper')
-        self.database = sqlite3.connect('data.db')
+        self.database = sqlite3.connect('data/data.db')
         self.database.row_factory = sqlite3.Row
         self.cursor = self.database.cursor()
 

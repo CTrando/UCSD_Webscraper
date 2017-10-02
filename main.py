@@ -5,16 +5,14 @@ import data_parser
 import data_cleaner
 
 if __name__ == '__main__':
-    scraper = scraper.Scraper()
-    scraper.scrape()
-    # parser = data_parser.Parser()
-    # parser.parse()
-    #
-    # cleaner = data_cleaner.Cleaner()
-    # cleaner.clean()
+    # scraper = scraper.Scraper()
+    # scraper.scrape()
+    parser = data_parser.Parser()
+    parser.parse()
 
-    # picker = classpicker.ClassPicker()
-    # picker.pick()
+    cleaner = data_cleaner.Cleaner()
+    cleaner.clean()
 
-    # department_scraper = departmentscraper.DepartmentScraper()
-    # department_scraper.scrape()
+    picker = classpicker.ClassPicker()
+    picker.pick()
+

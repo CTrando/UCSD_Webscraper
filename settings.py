@@ -3,7 +3,7 @@ import sqlite3
 import departmentscraper
 from timeutils import TimeInterval
 
-database = sqlite3.connect('data.db')
+database = sqlite3.connect('data/data.db')
 cursor = database.cursor()
 cursor.execute('SELECT DEPT_CODE FROM DEPARTMENT')
 DEPARTMENTS = []
