@@ -2,6 +2,8 @@ from tkinter import *
 from tkinter import font
 
 from classpicker import ClassPicker
+import scraper
+from timeutils import TimeInterval
 
 
 class Program(Frame):
@@ -14,20 +16,22 @@ class Program(Frame):
         master.minsize(width=720, height=480)
         master.maxsize(width=1920, height=1280)
         self.classes = []
+        self.class_rows = []
+        self.time_preferences = []
+        self.results = []
+        Program.widgets['classes'] = self.class_rows
         self.class_num = 0
         self.row_class_num = 2
         self.make_widgets()
 
     def make_widgets(self):
-        # self.quit = Button(self)
-        # self.quit['text'] = 'QUIT'
-        # self.quit['command'] = root.destroy
-        # self.quit.grid(row=0, column=0)
+        self.preference_input = StringVar()
         self.class_input = StringVar()
+        self.dept_input = StringVar()
         title_font = font.Font(family='Arial', size=25)
 
         self.text_box = Entry(self, textvariable=self.class_input)
-        self.text_box.grid(row=2, column=0, columnspan=10, sticky=W)
+        self.text_box.grid(row=2, column=0, columnspan=6, sticky=E+W)
         Program.widgets['text_box'] = self.text_box
 
         self.title = Label(self)
@@ -35,6 +39,11 @@ class Program(Frame):
         self.title['font'] = title_font
         self.title.grid(row=0, column=0, columnspan=10, sticky=W)
         Program.widgets['title'] = self.title
+
+        self.class_label = Label(self)
+        self.class_label['text'] = 'Selected Classes'
+        self.class_label.grid(row=1, column=10, sticky=W)
+        Program.widgets['class_label'] = self.class_label
 
         self.enter_class_label = Label(self)
         self.enter_class_label['text'] = 'Enter in your classes here'
@@ -44,19 +53,57 @@ class Program(Frame):
         self.enter = Button(self)
         self.enter['text'] = 'Click to add your class'
         self.enter['command'] = self.add_class
-        self.enter.grid(row=3, column=0, columnspan=10, sticky=W)
+        self.enter.grid(row=3, column=0, columnspan=6, sticky=E+W)
         Program.widgets['enter'] = self.enter
 
         self.start = Button(self)
         self.start['text'] = 'Start generating'
         self.start['command'] = self.run
-        self.start.grid(row=4, column=0, columnspan=10, sticky=W)
+        self.start.grid(row=4, column=0, columnspan=6, sticky=E+W)
         Program.widgets['start'] = self.start
 
-        self.clear = Button(self)
-        self.clear['text'] = 'Clear'
-        self.clear['command'] = self.clear_classes
-        self.clear.grid(row=5, column=0, columnspan=10, sticky=W)
+        self.clear_selected_classes = Button(self)
+        self.clear_selected_classes['text'] = 'Clear selected classes'
+        self.clear_selected_classes['command'] = self.clear_classes
+        self.clear_selected_classes.grid(row=5, column=0, columnspan=6, sticky=E+W)
+        Program.widgets['clear_selected_class'] = self.clear_selected_classes
+
+        self.clear_result = Button(self)
+        self.clear_result['text'] = 'Clear results'
+        self.clear_result['command'] = self.clear_results
+        self.clear_result.grid(row=6,column=0, columnspan=6, sticky=E+W)
+        Program.widgets['clear_result'] = self.clear_result
+
+        self.quit = Button(self)
+        self.quit['text'] = 'QUIT'
+        self.quit['command'] = root.destroy
+        self.quit.grid(row=7, column=0, columnspan=6, sticky=E+W)
+
+        self.rowconfigure(8, minsize=100)
+
+        self.enter_department_label = Label(self)
+        self.enter_department_label['text'] = 'Enter a department to scrape'
+        self.enter_department_label.grid(row=10, column=0, columnspan=6, sticky=W)
+
+        self.enter_department = Entry(self, textvariable=self.dept_input)
+        self.enter_department.grid(row=11, column=0, columnspan=6, sticky=E+W)
+
+        self.enter_department_btn = Button(self)
+        self.enter_department_btn['text'] = 'Click to webscrape department'
+        self.enter_department_btn['command'] = self.scrape_department
+        self.enter_department_btn.grid(row=12, column=0, columnspan=6, sticky=E+W)
+
+        self.preferences = Label(self)
+        self.preferences['text'] = 'Enter your time preferences'
+        self.preferences.grid(row=10, column=10, sticky=W)
+
+        self.preferences_entry = Entry(self, textvariable=self.preference_input)
+        self.preferences_entry.grid(row=11, column=10, sticky=W)
+
+        self.preferences_entry_btn = Button(self)
+        self.preferences_entry_btn['text'] = 'Click to add a time preference'
+        self.preferences_entry_btn['command'] = self.add_preference
+        self.preferences_entry_btn.grid(row=12, column=10,sticky=W)
 
     def add_class(self):
         text = self.text_box.get()
@@ -64,10 +111,8 @@ class Program(Frame):
             return
         self.text_box.delete(0, END)
 
-        class_label = Label(self)
-        class_label['text'] = text
-        class_label.grid(row=self.row_class_num, column=10, sticky=W)
-        Program.widgets['class' + str(self.class_num)] = class_label
+        new_row = ClassButtonRow(self, text)
+        self.class_rows.append(new_row)
 
         self.class_num += 1
         self.row_class_num += 1
@@ -75,18 +120,57 @@ class Program(Frame):
         print(text)
 
     def clear_classes(self):
-        for row in range(0, self.class_num):
-            Program.widgets['class' + str(row)].destroy()
-            del Program.widgets['class' + str(row)]
+        for row in self.class_rows:
+            row.destroy()
+        for row in self.class_rows:
+            self.class_rows.remove(row)
         self.class_num = 0
 
     def run(self):
+        self.clear_results()
         class_picker = ClassPicker()
         best_classes = class_picker.pick(self.classes)
         i = 5
         for best_class in best_classes:
             for sub_class in best_class.subclasses:
-                row = ClassRow(self, sub_class)
+                self.results.append(ClassRow(self, sub_class))
+
+    def clear_results(self):
+        for result in self.results:
+            result.destroy()
+
+    def add_preference(self):
+        self.time_preferences.append(TimeInterval(None, self.preference_input.get()))
+        [print(str(i)) for i in self.time_preferences]
+
+    def scrape_department(self):
+        web_scraper = scraper.Scraper()
+        web_scraper.login()
+        web_scraper.pick_quarter()
+        web_scraper.search_department(self.dept_input.get())
+        web_scraper.iter_pages()
+
+
+class ClassButtonRow:
+    current_row = 2
+
+    def __init__(self, Frame, text):
+        self.Frame = Frame
+        self.class_label = Label(Frame)
+        self.class_label['text'] = text
+        self.class_label.grid(row=ClassButtonRow.current_row, column=10, sticky=W)
+
+        self.rm_button = Button(Frame)
+        self.rm_button['text'] = 'Remove'
+        self.rm_button['command'] = self.destroy
+        self.rm_button.grid(row=ClassButtonRow.current_row, column=11, sticky=W)
+        ClassButtonRow.current_row += 1
+
+    def destroy(self):
+        ClassButtonRow.current_row -= 1
+        self.Frame.classes.remove(self.class_label['text'])
+        self.class_label.destroy()
+        self.rm_button.destroy()
 
 
 class ClassRow:
@@ -96,27 +180,33 @@ class ClassRow:
         self.data = class_template.data
         self.current_col = 0
 
-        type_label = Label(Frame)
-        type_label['text'] = self.data['TYPE'].strip()
-        type_label.grid(row=ClassRow.current_row, column=self.current_col, sticky=W)
+        self.type_label = Label(Frame)
+        self.type_label['text'] = self.data['TYPE'].strip()
+        self.type_label.grid(row=ClassRow.current_row, column=self.current_col, sticky=W)
         self.current_col += 1
 
-        course_num_label = Label(Frame)
-        course_num_label['text'] = self.data['COURSE_NUM']
-        course_num_label.grid(row=ClassRow.current_row, column=self.current_col, sticky=W)
+        self.course_num_label = Label(Frame)
+        self.course_num_label['text'] = self.data['COURSE_NUM']
+        self.course_num_label.grid(row=ClassRow.current_row, column=self.current_col, sticky=W)
         self.current_col += 1
 
-        day_label = Label(Frame)
-        day_label['text'] = self.data['DAYS']
-        day_label.grid(row=ClassRow.current_row, column=self.current_col, sticky=W)
+        self.day_label = Label(Frame)
+        self.day_label['text'] = self.data['DAYS']
+        self.day_label.grid(row=ClassRow.current_row, column=self.current_col, sticky=W)
         self.current_col += 1
 
-        time_label = Label(Frame)
-        time_label['text'] = self.data['TIME']
-        time_label.grid(row=ClassRow.current_row, column=self.current_col, sticky=W)
+        self.time_label = Label(Frame)
+        self.time_label['text'] = self.data['TIME']
+        self.time_label.grid(row=ClassRow.current_row, column=self.current_col, sticky=W)
         self.current_col += 1
 
         ClassRow.current_row += 1
+
+    def destroy(self):
+        self.type_label.destroy()
+        self.course_num_label.destroy()
+        self.day_label.destroy()
+        self.time_label.destroy()
 
 
 root = Tk()

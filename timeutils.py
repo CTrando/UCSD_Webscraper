@@ -77,6 +77,9 @@ class TimeInterval:
 
         return max(1, min(6, min(one, two)))
 
+    def __str__(self):
+        return str(self.times[0]) + ', ' + str(self.times[1])
+
 
 class DefaultTimeInterval(TimeInterval):
     def __init__(self):

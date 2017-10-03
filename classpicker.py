@@ -21,6 +21,7 @@ class ClassPicker():
             self.get_input()
         else:
             self.pref_classes = inputs
+        self.validate_inputs()
         self.generate_class_set()
         self.get_candidates()
         return self.get_output()

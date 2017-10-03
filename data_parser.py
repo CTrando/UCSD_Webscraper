@@ -70,15 +70,14 @@ class Parser:
         os.chdir('C:/Users/ctran/PycharmProjects/UCSD_Webscraper')
         connection = sqlite3.connect('data/data.db')
         cursor = connection.cursor()
+        cursor.execute("DROP TABLE IF EXISTS CLASSES")
         cursor.execute("CREATE TABLE IF NOT EXISTS CLASSES"
                        "(ID INTEGER PRIMARY KEY, COURSE_NUM REAL, COURSE_ID TEXT, "
                        "TYPE TEXT, DAYS TEXT, TIME TEXT, LOCATION TEXT, ROOM TEXT, "
-                       "INSTRUCTOR TEXT, DESCRIPTION TEXT,"
-
-                       "UNIQUE(COURSE_NUM, COURSE_ID, TYPE, DAYS, TIME, "
-                       "LOCATION, ROOM, INSTRUCTOR, DESCRIPTION))")
+                       "INSTRUCTOR TEXT, DESCRIPTION TEXT)")
 
         for info in self.buffer_buffer:
-            cursor.execute("INSERT OR IGNORE INTO CLASSES VALUES(?,?,?,?,?,?,?,?, ?, ?)", (None,) + info)
+            cursor.execute("INSERT INTO CLASSES VALUES(?,?,?,?,?,?,?,?, ?, ?)", (None,) + info)
+
         connection.commit()
         connection.close()

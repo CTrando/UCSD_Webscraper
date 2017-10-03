@@ -86,7 +86,7 @@ class Cleaner:
         for course_num in class_list:
             self.cursor.execute("SELECT ID, COURSE_ID, DAYS, TYPE "
                                 "FROM CLASSES WHERE COURSE_NUM = ?"
-                                "ORDER BY ID",
+                                "ORDER BY COURSE_NUM",
                                 course_num)
 
             '''
@@ -104,6 +104,7 @@ class Cleaner:
 
             for class_info in self.cursor.fetchall():
                 print(class_info)
+                print(course_num)
                 if ClassHolder.is_canceled(class_info):
                     continue
                 if ClassHolder.get_type(class_info) == 'LE':
