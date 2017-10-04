@@ -7,12 +7,13 @@ class ClassHolder:
         self.lab_key = None
         self.lecture_key = None
         self.discussion_key = None
+        self.seminar_key = None
         self.final_key = None
 
     @staticmethod
     def get_type(row):
         for col in row:
-            if col in ('LE', 'LA', 'DI', 'FINAL'):
+            if col in ('LE', 'LA', 'DI', 'SE','FINAL'):
                 return col
         return None
 
@@ -35,7 +36,7 @@ class ClassHolder:
             cursor.execute('UPDATE DATA SET DISCUSSION_KEY = ? WHERE COURSE_NUM = ? AND DISCUSSION_KEY IS NULL',
                            (discussion_key, course_num))
         else:
-            cursor.execute('INSERT INTO DATA VALUES(?,?,?,?,?,?)', (None, course_num, None, None, discussion_key, None))
+            cursor.execute('INSERT INTO DATA VALUES(?,?,?,?,?,?,?)', (None, course_num, None, None, discussion_key, None, None))
 
     @staticmethod
     def insert_lab(cursor, course_num, lab_key):
@@ -44,7 +45,16 @@ class ClassHolder:
         if num[0] > 0:
             cursor.execute('UPDATE DATA SET LAB_KEY = ? WHERE COURSE_NUM = ? AND LAB_KEY IS NULL', (lab_key, course_num))
         else:
-            cursor.execute('INSERT INTO DATA VALUES(?,?,?,?,?,?)', (None, course_num, None, lab_key, None, None))
+            cursor.execute('INSERT INTO DATA VALUES(?,?,?,?,?,?,?)', (None, course_num, None, lab_key, None, None, None))
+
+    @staticmethod
+    def insert_seminar(cursor, course_num, seminar_key):
+        cursor.execute('SELECT COUNT(1) FROM DATA WHERE COURSE_NUM = ?', (seminar_key,))
+        num = cursor.fetchone()
+        if num[0] > 0:
+            cursor.execute('UPDATE DATA SET SEMINAR_KEY = ? WHERE COURSE_NUM = ? AND SEMINAR_KEY IS NULL', (seminar_key, course_num))
+        else:
+            cursor.execute('INSERT INTO DATA VALUES(?,?,?,?,?,?,?)', (None, course_num, None, None, None, seminar_key, None))
 
     @staticmethod
     def insert_final(cursor, course_num, final_key):
@@ -54,11 +64,11 @@ class ClassHolder:
             cursor.execute('UPDATE DATA SET FINAL_KEY = ? WHERE COURSE_NUM = ? AND FINAL_KEY IS NULL',
                            (final_key, course_num))
         else:
-            cursor.execute('INSERT INTO DATA VALUES(?,?,?,?,?,?)', (None, course_num, None, None, None, final_key))
+            cursor.execute('INSERT INTO DATA VALUES(?,?,?,?,?,?,?)', (None, course_num, None, None, None, None,final_key))
 
     def save(self, cursor):
-        cursor.execute('INSERT INTO DATA VALUES(?,?,?,?,?,?)',
-                       (None, self.course_num, self.lecture_key, self.lab_key, self.discussion_key, self.final_key))
+        cursor.execute('INSERT INTO DATA VALUES(?,?,?,?,?,?,?)',
+                       (None, self.course_num, self.lecture_key, self.lab_key, self.discussion_key, self.seminar_key, self.final_key))
 
 
 class Cleaner:
@@ -77,7 +87,7 @@ class Cleaner:
             'CREATE TABLE IF NOT EXISTS DATA '
             '(ID INTEGER PRIMARY KEY, COURSE_NUM TEXT, '
             'LECTURE_KEY INTEGER, LAB_KEY INTEGER, '
-            'DISCUSSION_KEY INTEGER, FINAL_KEY INTEGER)'
+            'DISCUSSION_KEY INTEGER, SEMINAR_KEY INTEGER, FINAL_KEY INTEGER)'
         )
 
     def create_links(self):
@@ -116,6 +126,8 @@ class Cleaner:
                     ClassHolder.insert_final(self.cursor, course_num[0], class_info[0])
                 elif ClassHolder.get_type(class_info) == 'LA':
                     ClassHolder.insert_lab(self.cursor, course_num[0], class_info[0])
+                elif ClassHolder.get_type(class_info) == 'SE':
+                    ClassHolder.insert_seminar(self.cursor, course_num[0], class_info[0])
             print('*' * 10)
 
     def close(self):

@@ -41,6 +41,7 @@ class Class(ClassTemplate):
         self.lecture = None
         self.lab = None
         self.discussion = None
+        self.seminar = None
         self.final = None
 
         if self.data['LECTURE_KEY']:
@@ -55,6 +56,10 @@ class Class(ClassTemplate):
         if self.data['FINAL_KEY']:
             self.final = Final(cursor, self.data['FINAL_KEY'])
 
+        # TODO Add seminar to data
+        if self.data['SEMINAR_KEY']:
+            self.seminar = Seminar(cursor, self.data['SEMINAR_KEY'])
+
         self.subclasses = []
         if self.lab:
             self.subclasses.append(self.lab)
@@ -62,6 +67,8 @@ class Class(ClassTemplate):
             self.subclasses.append(self.lecture)
         if self.discussion:
             self.subclasses.append(self.discussion)
+        if self.seminar:
+            self.subclasses.append(self.seminar)
 
     def is_valid(self, w_set):
         if len(w_set) == 0:
@@ -108,7 +115,10 @@ class Class(ClassTemplate):
         return max(1, dist)
 
     def __str__(self):
-        return str(self.lecture) + ' ' + str(self.discussion) + ' ' + str(self.lab) + ' ' + str(self.final)
+        ret = ''
+        for cl in self.subclasses:
+            ret += ' ' + str(cl)
+        return ret
 
 
 class Lecture(ClassTemplate):
@@ -128,9 +138,14 @@ class Discussion(ClassTemplate):
         cursor.execute("SELECT * FROM CLASSES WHERE ID = ?", (ID,))
         super().__init__(cursor, ID)
 
+class Seminar(ClassTemplate):
+    def __init__(self, cursor, ID):
+        cursor.execute("SELECT * FROM CLASSES WHERE ID = ?", (ID,))
+        super().__init__(cursor, ID)
 
 class Final(ClassTemplate):
     def __init__(self, cursor, ID):
         cursor.execute("SELECT * FROM CLASSES WHERE ID = ?", (ID,))
         self.interval = DefaultTimeInterval()
         super().__init__(cursor, ID)
+
