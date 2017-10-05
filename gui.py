@@ -129,10 +129,10 @@ class Program(Frame):
     def run(self):
         self.clear_results()
         class_picker = ClassPicker()
-        best_classes = class_picker.pick(self.classes)
+        best_classes = class_picker.pick(self.classes, intervals=self.time_preferences)
         i = 5
         for best_class in best_classes:
-            for sub_class in best_class.subclasses:
+            for sub_class in best_class.subclasses.values():
                 self.results.append(ClassRow(self, sub_class))
 
     def clear_results(self):
@@ -141,6 +141,7 @@ class Program(Frame):
 
     def add_preference(self):
         self.time_preferences.append(TimeInterval(None, self.preference_input.get()))
+        self.preferences_entry.delete(0, END)
         [print(str(i)) for i in self.time_preferences]
 
     def scrape_department(self):

@@ -16,7 +16,10 @@ class ClassPicker():
         self.best_candidate = None
         self.best_candidate_score = -10000
 
-    def pick(self, inputs=None):
+    def pick(self, inputs=None, intervals=None):
+        if intervals and len(intervals) > 0:
+            global INTERVALS
+            INTERVALS = intervals
         if not inputs:
             self.get_input()
         else:

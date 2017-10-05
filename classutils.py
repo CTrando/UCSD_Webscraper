@@ -2,14 +2,23 @@ from timeutils import *
 
 
 class ClassTemplate:
-    def __init__(self, cursor, ID):
+    def __init__(self, cursor, ID, table='CLASSES'):
         self.cursor = cursor
+        cursor.execute("SELECT * FROM {} WHERE ID = ?".format(table), (ID,))
+
         self.data = dict(cursor.fetchone())
+        self.type = None
+        if 'TYPE' in self.data:
+            self.type = self.data['TYPE']
 
         self.interval = DefaultTimeInterval()
         self.make_interval()
 
     def make_interval(self):
+        if not self.type:
+            return
+        if self.type == 'FINAL':
+            return
         if 'DAYS' in self.data and 'TIME' in self.data:
             interval = TimeInterval(self.data['DAYS'], self.data['TIME'])
             if len(interval.times) > 0:
@@ -36,52 +45,37 @@ class ClassTemplate:
 
 class Class(ClassTemplate):
     def __init__(self, cursor, ID):
-        cursor.execute("SELECT * FROM DATA WHERE ID=?", (ID,))
-        super().__init__(cursor, ID)
-        self.lecture = None
-        self.lab = None
-        self.discussion = None
-        self.seminar = None
-        self.final = None
+        super().__init__(cursor, ID, table='DATA')
+        self.subclasses = {}
 
         if self.data['LECTURE_KEY']:
-            self.lecture = Lecture(cursor, self.data['LECTURE_KEY'])
+            self.subclasses['LE'] = ClassTemplate(cursor, self.data['LECTURE_KEY'])
 
         if self.data['LAB_KEY']:
-            self.lab = Lab(cursor, self.data['LAB_KEY'])
+            self.subclasses['LA'] = ClassTemplate(cursor, self.data['LAB_KEY'])
 
         if self.data['DISCUSSION_KEY']:
-            self.discussion = Discussion(cursor, self.data['DISCUSSION_KEY'])
+            self.subclasses['DI'] = ClassTemplate(cursor, self.data['DISCUSSION_KEY'])
 
         if self.data['FINAL_KEY']:
-            self.final = Final(cursor, self.data['FINAL_KEY'])
+            self.subclasses['FINAL'] = ClassTemplate(cursor, self.data['FINAL_KEY'])
 
-        # TODO Add seminar to data
         if self.data['SEMINAR_KEY']:
-            self.seminar = Seminar(cursor, self.data['SEMINAR_KEY'])
-
-        self.subclasses = []
-        if self.lab:
-            self.subclasses.append(self.lab)
-        if self.lecture:
-            self.subclasses.append(self.lecture)
-        if self.discussion:
-            self.subclasses.append(self.discussion)
-        if self.seminar:
-            self.subclasses.append(self.seminar)
+            self.subclasses['SE'] = ClassTemplate(cursor, self.data['SEMINAR_KEY'])
 
     def is_valid(self, w_set):
         if len(w_set) == 0:
             return True
         else:
             for choice in w_set:
+                #TODO BIG BUG HERE MUST FIX SO FINALS DONT OVERLAP
                 if self.overlaps_times_and_days(choice):
                     return False
             return True
 
     def overlaps_time(self, choice_time):
         subclasses = []
-        for subclass in self.subclasses:
+        for subclass in self.subclasses.values():
             if subclass.overlaps_time(choice_time):
                 subclasses.append(True)
             else:
@@ -89,15 +83,15 @@ class Class(ClassTemplate):
         return all(subclasses)
 
     def overlaps_times_and_days(self, choice):
-        for self_cl in self.subclasses:
-            for choice_cl in choice.subclasses:
+        for self_cl in self.subclasses.values():
+            for choice_cl in choice.subclasses.values():
                 if self_cl.overlaps_times_and_days(choice_cl):
                     return True
         return False
 
     def inside_time(self, choice_time):
         subclasses = []
-        for subclass in self.subclasses:
+        for subclass in self.subclasses.values():
             if subclass.inside_time(choice_time):
                 subclasses.append(True)
             else:
@@ -106,46 +100,13 @@ class Class(ClassTemplate):
 
     def distance_from_interval(self, interval):
         dist = 0
-        if self.lecture and not self.lecture.inside_time(interval):
-            dist += self.lecture.distance_from_interval(interval)
-        if self.discussion and not self.discussion.inside_time(interval):
-            dist += self.discussion.distance_from_interval(interval)
-        if self.lab and not self.lab.inside_time(interval):
-            dist += self.lab.distance_from_interval(interval)
+        for subclass in self.subclasses.values():
+            if not subclass.inside_time(interval):
+                dist += subclass.distance_from_interval(interval)
         return max(1, dist)
 
     def __str__(self):
         ret = ''
-        for cl in self.subclasses:
+        for cl in self.subclasses.values():
             ret += ' ' + str(cl)
         return ret
-
-
-class Lecture(ClassTemplate):
-    def __init__(self, cursor, ID):
-        cursor.execute("SELECT * FROM CLASSES WHERE ID = ?", (ID,))
-        super().__init__(cursor, ID)
-
-
-class Lab(ClassTemplate):
-    def __init__(self, cursor, ID):
-        cursor.execute("SELECT * FROM CLASSES WHERE ID = ?", (ID,))
-        super().__init__(cursor, ID)
-
-
-class Discussion(ClassTemplate):
-    def __init__(self, cursor, ID):
-        cursor.execute("SELECT * FROM CLASSES WHERE ID = ?", (ID,))
-        super().__init__(cursor, ID)
-
-class Seminar(ClassTemplate):
-    def __init__(self, cursor, ID):
-        cursor.execute("SELECT * FROM CLASSES WHERE ID = ?", (ID,))
-        super().__init__(cursor, ID)
-
-class Final(ClassTemplate):
-    def __init__(self, cursor, ID):
-        cursor.execute("SELECT * FROM CLASSES WHERE ID = ?", (ID,))
-        self.interval = DefaultTimeInterval()
-        super().__init__(cursor, ID)
-
