@@ -1,4 +1,5 @@
 import sqlite3
+import sys
 
 from classutils import *
 from settings import INTERVALS
@@ -14,16 +15,16 @@ class ClassPicker():
         self.pref_classes = []
         self.candidates = []
         self.best_candidate = None
-        self.best_candidate_score = -10000
+        self.best_candidate_score = -sys.maxsize
 
     def pick(self, inputs=None, intervals=None):
         if intervals and len(intervals) > 0:
             global INTERVALS
             INTERVALS = intervals
-        if not inputs:
-            self.get_input()
-        else:
-            self.pref_classes = inputs
+        # if not inputs:
+        #     self.get_input()
+        # else:
+        self.pref_classes = [i.upper() for i in inputs]
         self.validate_inputs()
         self.generate_class_set()
         self.get_candidates()

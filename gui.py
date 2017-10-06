@@ -1,5 +1,8 @@
+#!/usr/bin/env python3
+
 from tkinter import *
 from tkinter import font
+import kivy
 
 from classpicker import ClassPicker
 import scraper
@@ -22,16 +25,17 @@ class Program(Frame):
         Program.widgets['classes'] = self.class_rows
         self.class_num = 0
         self.row_class_num = 2
-        self.make_widgets()
+        self.make_widgets(master)
 
-    def make_widgets(self):
+    def make_widgets(self, master):
         self.preference_input = StringVar()
         self.class_input = StringVar()
         self.dept_input = StringVar()
         title_font = font.Font(family='Arial', size=25)
 
         self.text_box = Entry(self, textvariable=self.class_input)
-        self.text_box.grid(row=2, column=0, columnspan=6, sticky=E+W)
+        self.text_box.grid(row=2, column=0, columnspan=6, sticky=E + W)
+        self.text_box.bind('<Return>', self.add_class)
         Program.widgets['text_box'] = self.text_box
 
         self.title = Label(self)
@@ -53,31 +57,31 @@ class Program(Frame):
         self.enter = Button(self)
         self.enter['text'] = 'Click to add your class'
         self.enter['command'] = self.add_class
-        self.enter.grid(row=3, column=0, columnspan=6, sticky=E+W)
+        self.enter.grid(row=3, column=0, columnspan=6, sticky=E + W)
         Program.widgets['enter'] = self.enter
 
         self.start = Button(self)
         self.start['text'] = 'Start generating'
         self.start['command'] = self.run
-        self.start.grid(row=4, column=0, columnspan=6, sticky=E+W)
+        self.start.grid(row=4, column=0, columnspan=6, sticky=E + W)
         Program.widgets['start'] = self.start
 
         self.clear_selected_classes = Button(self)
         self.clear_selected_classes['text'] = 'Clear selected classes'
         self.clear_selected_classes['command'] = self.clear_classes
-        self.clear_selected_classes.grid(row=5, column=0, columnspan=6, sticky=E+W)
+        self.clear_selected_classes.grid(row=5, column=0, columnspan=6, sticky=E + W)
         Program.widgets['clear_selected_class'] = self.clear_selected_classes
 
         self.clear_result = Button(self)
         self.clear_result['text'] = 'Clear results'
         self.clear_result['command'] = self.clear_results
-        self.clear_result.grid(row=6,column=0, columnspan=6, sticky=E+W)
+        self.clear_result.grid(row=6, column=0, columnspan=6, sticky=E + W)
         Program.widgets['clear_result'] = self.clear_result
 
         self.quit = Button(self)
         self.quit['text'] = 'QUIT'
         self.quit['command'] = root.destroy
-        self.quit.grid(row=7, column=0, columnspan=6, sticky=E+W)
+        self.quit.grid(row=7, column=0, columnspan=6, sticky=E + W)
 
         self.rowconfigure(8, minsize=100)
 
@@ -86,12 +90,13 @@ class Program(Frame):
         self.enter_department_label.grid(row=10, column=0, columnspan=6, sticky=W)
 
         self.enter_department = Entry(self, textvariable=self.dept_input)
-        self.enter_department.grid(row=11, column=0, columnspan=6, sticky=E+W)
+        self.enter_department.grid(row=11, column=0, columnspan=6, sticky=E + W)
+        self.enter_department.bind('<Return>', self.scrape_department)
 
         self.enter_department_btn = Button(self)
         self.enter_department_btn['text'] = 'Click to webscrape department'
         self.enter_department_btn['command'] = self.scrape_department
-        self.enter_department_btn.grid(row=12, column=0, columnspan=6, sticky=E+W)
+        self.enter_department_btn.grid(row=12, column=0, columnspan=6, sticky=E + W)
 
         self.preferences = Label(self)
         self.preferences['text'] = 'Enter your time preferences'
@@ -99,14 +104,15 @@ class Program(Frame):
 
         self.preferences_entry = Entry(self, textvariable=self.preference_input)
         self.preferences_entry.grid(row=11, column=10, sticky=W)
+        self.preferences_entry.bind('<Return>', self.add_preference)
 
         self.preferences_entry_btn = Button(self)
         self.preferences_entry_btn['text'] = 'Click to add a time preference'
         self.preferences_entry_btn['command'] = self.add_preference
-        self.preferences_entry_btn.grid(row=12, column=10,sticky=W)
+        self.preferences_entry_btn.grid(row=12, column=10, sticky=W)
 
-    def add_class(self):
-        text = self.text_box.get()
+    def add_class(self, event=None):
+        text = self.text_box.get().upper()
         if len(text) <= 0:
             return
         self.text_box.delete(0, END)
@@ -139,12 +145,12 @@ class Program(Frame):
         for result in self.results:
             result.destroy()
 
-    def add_preference(self):
+    def add_preference(self, event=None):
         self.time_preferences.append(TimeInterval(None, self.preference_input.get()))
         self.preferences_entry.delete(0, END)
         [print(str(i)) for i in self.time_preferences]
 
-    def scrape_department(self):
+    def scrape_department(self, event=None):
         web_scraper = scraper.Scraper()
         web_scraper.login()
         web_scraper.pick_quarter()
