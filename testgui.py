@@ -9,6 +9,7 @@ from kivy.uix.label import Label
 import time
 
 from kivy.uix.textinput import TextInput
+from kivy.uix.widget import Widget
 
 Config.set('graphics', 'font-name', 'Times')
 
@@ -58,64 +59,78 @@ class MyGridLayout(GridLayout):
 
 class MainApp(App):
     def build(self):
-        root = RootLayout()
+        self.root = root= RootLayout()
 
-        one = BoxLayout(size_hint=(1, 1))
-
-        label = MyLabel(text='UCSD Web Scraper', font_size='32sp', halign='left', size_hint_x=.7, valign='top')
+        # First layer holds the title and the time
+        self.first_layer = first_layer = BoxLayout(size_hint=(1, 1))
+        label = MyLabel(text='UCSD Web Scraper', font_size='32sp', halign='left', size_hint=(.7, 1), valign='top')
         credits_label = TimeLabel(text='Hi', font_size=14, halign='right',
-                                  size_hint_x=.3, valign='top')
+                                  size_hint=(.3, 1), valign='top')
+        first_layer.add_widget(label)
+        first_layer.add_widget(credits_label)
+        root.add_widget(first_layer)
 
+        # Schedule updating the time
         Clock.schedule_interval(credits_label.update, 1)
-        one.add_widget(label)
-        one.add_widget(credits_label)
 
-        root.add_widget(one)
+        # The second layer, just holds the enter the following label
+        self.second_layer = secondLayer = BoxLayout(size_hint=(1, 1))
+        secondLayer.add_widget(MyLabel(text='Enter your classes below.', halign='left', valign='middle'))
+        root.add_widget(secondLayer)
 
-        extra = BoxLayout(size_hint=(1, 1))
-        extra.add_widget(MyLabel(text='Enter your classes below.', halign='left', valign='middle'))
-        root.add_widget(extra)
+        # The third layer
+        self.third_layer = third_layer = BoxLayout(size_hint=(1, 10))
 
-        yes = BoxLayout(size_hint=(1, 13))
-        yes.add_widget(Label(text='hi'))
-
-        other_grid = GridLayout(cols=2, size_hint=(1, 13))
+        # The first half of the third layer
+        third_layer_1 = BoxLayout(size_hint=(.5, 1), orientation='vertical')
         grid = GridLayout(cols=2, size_hint=(1, 1))
-        grid.add_widget(TextInput(text='hi', multiline=False, size_hint=(.8, 1)))
+        text_input = TextInput(text='hi', multiline=False, size_hint=(.8,1))
+        text_input.bind(on_text_validate=self.handle_input)
+        grid.add_widget(text_input)
         grid.add_widget(Button(text='Enter', size_hint=(.2, 1)))
+        third_layer_1.add_widget(grid)
+        third_layer_1.add_widget(Label(size_hint=(1, 8)))
+        third_layer_1.add_widget(Button(text='Clean'))
+        third_layer_1.add_widget(Button(text='Parse'))
 
-        clean_grid = GridLayout(cols=1, size_hint=(1,10))
-        clean_grid.add_widget(Label(text='', size_hint=(1, 5)))
-        clean_grid.add_widget(Button(text='Clean', size_hint=(1, 1)))
-        clean_grid.add_widget(Button(text='Parse', size_hint=(1, 1)))
-        clean_grid.add_widget(Label(text='', size_hint=(1, 5)))
+        # The second half of the third layer
+        third_layer_2 = BoxLayout(size_hint=(.5, 1), orientation='vertical')
 
-        grid.add_widget(clean_grid)
-        other_grid.add_widget(grid)
+        # Grid with all the classes
+        self.classes_grid = classes_grid = GridLayout(cols=2, size_hint=(1, 1))
 
-        classes_grid = GridLayout(cols=2, size_hint=(1, 1))
-        classes_grid.add_widget(Label(text='Class here', size_hint=(.6, 1)))
-        classes_grid.add_widget(Button(text='hi how are you', size_hint=(.4, 1)))
+        third_layer_2.add_widget(classes_grid)
+        third_layer_2.add_widget(Label(size_hint=(1, .2)))
 
-        classes_grid.add_widget(Label(text='Class here', size_hint=(.6, 1)))
-        classes_grid.add_widget(Button(text='hi how are you', size_hint=(.4, 1)))
+        # Create a new grid so it will go like [     Begin] instead of [Begin      ]
+        begin_grid = GridLayout(cols=2, size_hint=(1, .3))
+        begin_grid.add_widget(Label())
+        begin_grid.add_widget(Button(text='Begin', size_hint=(1, 1)))
+        third_layer_2.add_widget(begin_grid)
 
-        classes_grid.add_widget(Label(text='Class here', size_hint=(.6, 1)))
-        classes_grid.add_widget(Button(text='hi how are you', size_hint=(.4, 1)))
-
-        classes_grid.add_widget(Label(text='Class here', size_hint=(.6, 1)))
-        classes_grid.add_widget(Button(text='hi how are you', size_hint=(.4, 1)))
-
-        begin_grid = GridLayout(cols=1, size_hint=(1,4))
-        begin_grid.add_widget(Button(text='Begin', size_hint=(1,1)))
-
-        other_grid.add_widget(classes_grid)
-
-
-        root.add_widget(other_grid)
-        root.add_widget(begin_grid)
+        third_layer.add_widget(third_layer_1)
+        third_layer.add_widget(third_layer_2)
+        root.add_widget(third_layer)
 
         return root
+
+    def handle_input(self, value):
+        ClassRow(widget=self.classes_grid, class_name=value.text)
+        print(value.text)
+        value.text=''
+
+
+
+
+class ClassRow():
+    def __init__(self, **kwargs):
+        if 'class_name' in kwargs:
+            self.class_name = kwargs['class_name']
+        else:
+            self.class_name = ''
+        if 'widget' in kwargs:
+            kwargs['widget'].add_widget(MyLabel(text=self.class_name, padding=(50,20), halign='left', valign='center', size_hint=(.6, None), height=50))
+            kwargs['widget'].add_widget(Button(text='hi how are you', size_hint=(.4, None), height=50))
 
 
 if __name__ == '__main__':
