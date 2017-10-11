@@ -1,8 +1,4 @@
-import classpicker
-import departmentscraper
-import scraper
-import data_parser
-import data_cleaner
+from data_util import data_cleaner
 
 if __name__ == '__main__':
     #scraper = scraper.Scraper()
