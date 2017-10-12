@@ -13,6 +13,7 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.widget import Widget
 
 from classpicker import ClassPicker
+from data_util import data_cleaner, data_parser
 
 Config.set('graphics', 'font-name', 'Times')
 
@@ -23,7 +24,7 @@ class RootLayout(BoxLayout):
         self.orientation = 'vertical'
         self.padding = (50, 50)
         with self.canvas.before:
-            Color(0, 0, 0, 1)
+            Color(0,0,0,1)
             self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(size=self._update_rect, pos=self._update_rect)
 
@@ -132,12 +133,12 @@ class MainApp(App):
         add_class_button.bind(on_press=self.add_class_row)
         grid.add_widget(add_class_button)
 
-        self.results_box = results_box = BackgroundBoxLayout(background='Logo.jpg', orientation='vertical', padding=(10, 0), size_hint=(1, 8))
+        self.results_box = results_box = BoxLayout(orientation='vertical', padding=(10, 0), size_hint=(1, 8))
 
         third_layer_1.add_widget(grid)
         third_layer_1.add_widget(results_box)
-        third_layer_1.add_widget(Button(text='Clean'))
-        third_layer_1.add_widget(Button(text='Parse'))
+        third_layer_1.add_widget(Button(text='Parse', on_press=self.parse))
+        third_layer_1.add_widget(Button(text='Clean', on_press=self.clean))
 
         # The second half of the third layer
         third_layer_2 = BoxLayout(size_hint=(.5, 1), orientation='vertical')
@@ -168,6 +169,14 @@ class MainApp(App):
         print([row.class_name for row in self.class_rows])
         self.text_input.text = ''
 
+    def parse(self, value):
+        parser = data_parser.Parser()
+        parser.parse()
+
+    def clean(self, value):
+        cleaner = data_cleaner.Cleaner()
+        cleaner.clean()
+
     def begin(self, value):
         self.results_box.clear_widgets()
         class_picker = ClassPicker()
@@ -183,7 +192,7 @@ class MainApp(App):
 class ClassRow():
     def __init__(self, **kwargs):
         if 'class_name' in kwargs:
-            self.class_name = kwargs['class_name']
+            self.class_name = kwargs['class_name'].upper()
         else:
             self.class_name = ''
         if 'widget' in kwargs:

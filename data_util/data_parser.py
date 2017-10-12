@@ -81,10 +81,11 @@ class Parser:
         cursor.execute("CREATE TABLE CLASSES"
                        "(ID INTEGER PRIMARY KEY, COURSE_NUM REAL, COURSE_ID TEXT, "
                        "TYPE TEXT, DAYS TEXT, TIME TEXT, LOCATION TEXT, ROOM TEXT, "
-                       "INSTRUCTOR TEXT, DESCRIPTION TEXT)")
+                       "INSTRUCTOR TEXT, DESCRIPTION TEXT,"
+                       "UNIQUE(COURSE_NUM, COURSE_ID, TYPE, DAYS, TIME, LOCATION, ROOM, INSTRUCTOR))")
 
         for info in self.buffer_buffer:
-            cursor.execute("INSERT INTO CLASSES VALUES(?,?,?,?,?,?,?,?, ?, ?)", (None,) + info)
+            cursor.execute("INSERT OR IGNORE INTO CLASSES VALUES(?,?,?,?,?,?,?,?, ?, ?)", (None,) + info)
 
         connection.commit()
         connection.close()

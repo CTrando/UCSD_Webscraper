@@ -23,10 +23,17 @@ class ClassHolder:
             return True
         return False
 
-    def insert_lecture(self, cursor, course_num, lecture_id):
+    def insert_lecture(self, cursor, course_num, lecture_key):
         self.course_num = course_num
-        self.lecture_key = lecture_id
-        self.save(cursor)
+        self.lecture_key = lecture_key
+        cursor.execute('SELECT COUNT(1) FROM DATA WHERE COURSE_NUM = ?', (course_num,))
+        num = cursor.fetchone()
+        if num[0] > 0:
+            cursor.execute('UPDATE DATA SET LECTURE_KEY = ? WHERE COURSE_NUM = ? AND LECTURE_KEY IS NULL',
+                           (lecture_key, course_num))
+        else:
+            cursor.execute('INSERT INTO DATA VALUES(?,?,?,?,?,?,?)',
+                           (None, course_num, None, None, None, None, lecture_key))
 
     @staticmethod
     def insert_discussion(cursor, course_num, discussion_key):
