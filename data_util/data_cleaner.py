@@ -23,6 +23,12 @@ class ClassHolder:
             return True
         return False
 
+    @staticmethod
+    def is_review_session(row):
+        if 'Review Sessions' in row:
+            return True
+        return False
+
     @classmethod
     def insert_lecture(self, cursor, course_num, lecture_key):
         cursor.execute('SELECT COUNT(1) FROM DATA WHERE COURSE_NUM = ? AND LECTURE_KEY IS NULL', (course_num,))
@@ -122,7 +128,7 @@ class Cleaner:
             for class_info in self.cursor.fetchall():
                 print(class_info)
                 print(course_num)
-                if ClassHolder.is_canceled(class_info):
+                if ClassHolder.is_canceled(class_info) or ClassHolder.is_review_session(class_info):
                     continue
                 if ClassHolder.get_type(class_info) == 'LE':
                     ClassHolder.insert_lecture(self.cursor, course_num[0], class_info[0])
