@@ -13,7 +13,7 @@ class ClassHolder:
     @staticmethod
     def get_type(row):
         for col in row:
-            if col in ('LE', 'LA', 'DI', 'SE','FINAL'):
+            if col in ('LE', 'LA', 'DI', 'SE', 'FINAL'):
                 return col
         return None
 
@@ -23,45 +23,49 @@ class ClassHolder:
             return True
         return False
 
+    @classmethod
     def insert_lecture(self, cursor, course_num, lecture_key):
-        self.course_num = course_num
-        self.lecture_key = lecture_key
-        cursor.execute('SELECT COUNT(1) FROM DATA WHERE COURSE_NUM = ?', (course_num,))
+        cursor.execute('SELECT COUNT(1) FROM DATA WHERE COURSE_NUM = ? AND LECTURE_KEY IS NULL', (course_num,))
         num = cursor.fetchone()
         if num[0] > 0:
             cursor.execute('UPDATE DATA SET LECTURE_KEY = ? WHERE COURSE_NUM = ? AND LECTURE_KEY IS NULL',
                            (lecture_key, course_num))
         else:
             cursor.execute('INSERT INTO DATA VALUES(?,?,?,?,?,?,?)',
-                           (None, course_num, None, None, None, None, lecture_key))
+                           (None, course_num, lecture_key, None, None, None, None))
 
     @staticmethod
     def insert_discussion(cursor, course_num, discussion_key):
-        cursor.execute('SELECT COUNT(1) FROM DATA WHERE COURSE_NUM = ?', (course_num,))
+        cursor.execute('SELECT COUNT(1) FROM DATA WHERE COURSE_NUM = ? AND DISCUSSION_KEY IS NULL', (course_num,))
         num = cursor.fetchone()
         if num[0] > 0:
             cursor.execute('UPDATE DATA SET DISCUSSION_KEY = ? WHERE COURSE_NUM = ? AND DISCUSSION_KEY IS NULL',
                            (discussion_key, course_num))
         else:
-            cursor.execute('INSERT INTO DATA VALUES(?,?,?,?,?,?,?)', (None, course_num, None, None, discussion_key, None, None))
+            cursor.execute('INSERT INTO DATA VALUES(?,?,?,?,?,?,?)',
+                           (None, course_num, None, None, discussion_key, None, None))
 
     @staticmethod
     def insert_lab(cursor, course_num, lab_key):
-        cursor.execute('SELECT COUNT(1) FROM DATA WHERE COURSE_NUM = ?', (course_num,))
+        cursor.execute('SELECT COUNT(1) FROM DATA WHERE COURSE_NUM = ? AND LAB_KEY IS NULL', (course_num,))
         num = cursor.fetchone()
         if num[0] > 0:
-            cursor.execute('UPDATE DATA SET LAB_KEY = ? WHERE COURSE_NUM = ? AND LAB_KEY IS NULL', (lab_key, course_num))
+            cursor.execute('UPDATE DATA SET LAB_KEY = ? WHERE COURSE_NUM = ? AND LAB_KEY IS NULL',
+                           (lab_key, course_num))
         else:
-            cursor.execute('INSERT INTO DATA VALUES(?,?,?,?,?,?,?)', (None, course_num, None, lab_key, None, None, None))
+            cursor.execute('INSERT INTO DATA VALUES(?,?,?,?,?,?,?)',
+                           (None, course_num, None, lab_key, None, None, None))
 
     @staticmethod
     def insert_seminar(cursor, course_num, seminar_key):
-        cursor.execute('SELECT COUNT(1) FROM DATA WHERE COURSE_NUM = ?', (seminar_key,))
+        cursor.execute('SELECT COUNT(1) FROM DATA WHERE COURSE_NUM = ? AND SEMINAR_KEY IS NULL', (seminar_key,))
         num = cursor.fetchone()
         if num[0] > 0:
-            cursor.execute('UPDATE DATA SET SEMINAR_KEY = ? WHERE COURSE_NUM = ? AND SEMINAR_KEY IS NULL', (seminar_key, course_num))
+            cursor.execute('UPDATE DATA SET SEMINAR_KEY = ? WHERE COURSE_NUM = ? AND SEMINAR_KEY IS NULL',
+                           (seminar_key, course_num))
         else:
-            cursor.execute('INSERT INTO DATA VALUES(?,?,?,?,?,?,?)', (None, course_num, None, None, None, seminar_key, None))
+            cursor.execute('INSERT INTO DATA VALUES(?,?,?,?,?,?,?)',
+                           (None, course_num, None, None, None, seminar_key, None))
 
     @staticmethod
     def insert_final(cursor, course_num, final_key):
@@ -71,11 +75,8 @@ class ClassHolder:
             cursor.execute('UPDATE DATA SET FINAL_KEY = ? WHERE COURSE_NUM = ? AND FINAL_KEY IS NULL',
                            (final_key, course_num))
         else:
-            cursor.execute('INSERT INTO DATA VALUES(?,?,?,?,?,?,?)', (None, course_num, None, None, None, None,final_key))
-
-    def save(self, cursor):
-        cursor.execute('INSERT INTO DATA VALUES(?,?,?,?,?,?,?)',
-                       (None, self.course_num, self.lecture_key, self.lab_key, self.discussion_key, self.seminar_key, self.final_key))
+            cursor.execute('INSERT INTO DATA VALUES(?,?,?,?,?,?,?)',
+                           (None, course_num, None, None, None, None, final_key))
 
 
 class Cleaner:
@@ -103,8 +104,7 @@ class Cleaner:
         for course_num in class_list:
             self.cursor.execute("SELECT ID, COURSE_ID, DAYS, TYPE "
                                 "FROM CLASSES WHERE COURSE_NUM = ?"
-                                "ORDER BY COURSE_NUM",
-                                course_num)
+                                "ORDER BY ID", course_num)
 
             '''
                 The strategy here is to loop through each class data set (Every class that has the same 
@@ -125,8 +125,7 @@ class Cleaner:
                 if ClassHolder.is_canceled(class_info):
                     continue
                 if ClassHolder.get_type(class_info) == 'LE':
-                    new_class = ClassHolder()
-                    new_class.insert_lecture(self.cursor, course_num[0], class_info[0])
+                    ClassHolder.insert_lecture(self.cursor, course_num[0], class_info[0])
                 elif ClassHolder.get_type(class_info) == 'DI':
                     ClassHolder.insert_discussion(self.cursor, course_num[0], class_info[0])
                 elif ClassHolder.get_type(class_info) == 'FINAL':
@@ -135,6 +134,7 @@ class Cleaner:
                     ClassHolder.insert_lab(self.cursor, course_num[0], class_info[0])
                 elif ClassHolder.get_type(class_info) == 'SE':
                     ClassHolder.insert_seminar(self.cursor, course_num[0], class_info[0])
+                self.database.commit()
             print('*' * 10)
 
     def close(self):
