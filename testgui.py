@@ -9,6 +9,7 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 import time
 
+from kivy.uix.stacklayout import StackLayout
 from kivy.uix.textinput import TextInput
 from kivy.uix.widget import Widget
 
@@ -24,8 +25,8 @@ class RootLayout(BoxLayout):
         self.orientation = 'vertical'
         self.padding = (50, 50)
         with self.canvas.before:
+            self.rect = Rectangle(size=self.size, pos=self.pos, source='background_image.png')
             Color(0, 0, 0, 1)
-            self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(size=self._update_rect, pos=self._update_rect)
 
     def _update_rect(self, instance, value):
@@ -95,46 +96,51 @@ class MyGridLayout(GridLayout):
 
 class MainApp(App):
     class_rows = []
+    time_prfs = []
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
     def build(self):
+        # initialize the root
         self.root = root = RootLayout()
 
         # First layer holds the title and the time
         self.first_layer = first_layer = BoxLayout(size_hint=(1, 1))
-        label = MyLabel(text='UCSD Web Scraper', font_size='32sp', halign='left', size_hint=(.7, 1), valign='top')
-        credits_label = TimeLabel(text='Hi', font_size=14, halign='right',
-                                  size_hint=(.3, 1), valign='top')
-        first_layer.add_widget(label)
-        first_layer.add_widget(credits_label)
+        title_label = MyLabel(text='UCSD Web Scraper', font_size='32sp', halign='left', size_hint=(.7, 1), valign='top')
+        time_label = TimeLabel(text='Hi', font_size=14, halign='right',
+                               size_hint=(.3, 1), valign='top')
+        first_layer.add_widget(title_label)
+        first_layer.add_widget(time_label)
         root.add_widget(first_layer)
 
         # Schedule updating the time
-        Clock.schedule_interval(credits_label.update, 1)
-
-        # The second layer, just holds the enter the following label
-        self.second_layer = secondLayer = BoxLayout(size_hint=(1, 1))
-        secondLayer.add_widget(MyLabel(text='Enter your classes below.', halign='left', valign='middle'))
-        root.add_widget(secondLayer)
+        Clock.schedule_interval(time_label.update, 1)
 
         # The third layer
         self.third_layer = third_layer = BoxLayout(size_hint=(1, 10))
 
         # The first half of the third layer
         third_layer_1 = BoxLayout(size_hint=(.5, 1), orientation='vertical')
-        grid = GridLayout(cols=2, size_hint=(1, 1), spacing=[0, 20])
+        third_layer_1.add_widget(
+            MyLabel(text='Enter your classes below.', size_hint=(1, 1), halign='left', valign='center'))
 
         # Doing the text addition
+        text_box = BoxLayout(size_hint=(1, 1))
         self.text_input = text_input = TextInput(multiline=False, size_hint=(.8, None), height=50)
         text_input.bind(on_text_validate=self.add_class_row)
-        grid.add_widget(text_input)
+        text_box.add_widget(text_input)
 
         # Adding the add_class_button
         add_class_button = Button(text='Enter', size_hint=(.2, None), height=50)
         add_class_button.bind(on_press=self.add_class_row)
-        grid.add_widget(add_class_button)
+        text_box.add_widget(add_class_button)
+
+        third_layer_1.add_widget(text_box)
+
+        third_layer_1.add_widget(MyLabel(text='Enter your time preferences here.', valign='center'))
+
+        time_box = BoxLayout(size_hint=(1, 1))
 
         # Doing the second time input
         self.time_input = TextInput(text='Time', size_hint=(.8, None), height=50, multiline=False)
@@ -142,36 +148,39 @@ class MainApp(App):
         # Adding the enter preference button
         add_preference_button = Button(text='Enter', size_hint=(.2, None), height=50, on_press=self.add_time_preference)
 
-        grid.add_widget(MyLabel(halign='left', text='Enter your preferences here', size_hint=(1, 1), valign='center'))
+        time_box.add_widget(self.time_input)
+        time_box.add_widget(add_preference_button)
+        third_layer_1.add_widget(time_box)
 
-        # Adding a label to take up the second space of the grid
-        grid.add_widget(Label(size_hint=(0, 0)))
-        grid.add_widget(self.time_input)
-        grid.add_widget(add_preference_button)
+        temp_box = BoxLayout(size_hint=(1, 5))
+        self.time_preferences_box = time_preference_box = StackLayout(padding=(0,10), spacing=3, size_hint=(1, 1))
+        temp_box.add_widget(self.time_preferences_box)
+
+        third_layer_1.add_widget(temp_box)
 
         self.results_box = results_box = BoxLayout(orientation='vertical', padding=(10, 0), size_hint=(1, 8))
 
-        third_layer_1.add_widget(grid)
-        third_layer_1.add_widget(results_box)
-        third_layer_1.add_widget(Button(text='Parse', on_press=self.parse))
-        third_layer_1.add_widget(Button(text='Clean', on_press=self.clean))
+        third_layer_1.add_widget(Button(text='Parse', size_hint=(1, 1), on_press=self.parse))
+        third_layer_1.add_widget(Button(text='Clean', size_hint=(1, 1), on_press=self.clean))
 
         # The second half of the third layer
         third_layer_2 = BoxLayout(size_hint=(.5, 1), orientation='vertical')
 
-        # Grid with all the classes
-        self.classes_grid = classes_grid = GridLayout(cols=2, size_hint=(1, 1), padding=(10, 0), spacing=3)
+        third_layer_2.add_widget(MyLabel(text='', valign='center', size_hint=(1, 1)))
 
-        third_layer_2.add_widget(classes_grid)
+        # Grid with all the classes
+        self.classes_box = classes_box = StackLayout(padding=(10,0), spacing=3, size_hint=(1, 12))
+
+        third_layer_2.add_widget(classes_box)
 
         # Create time entry
 
         # Create a new grid so it will go like [     Begin] instead of [Begin      ]
-        begin_grid = GridLayout(cols=2, size_hint=(1, 1), spacing=10)
-        begin_grid.add_widget(Label())
+        begin_box = BoxLayout(size_hint=(1, 1), spacing=10)
+        begin_box.add_widget(Label())
         begin_button = Button(text='Begin', size_hint=(1, None), height=100, on_press=self.begin)
-        begin_grid.add_widget(begin_button)
-        third_layer_2.add_widget(begin_grid)
+        begin_box.add_widget(begin_button)
+        third_layer_2.add_widget(begin_box)
 
         third_layer.add_widget(third_layer_1)
         third_layer.add_widget(third_layer_2)
@@ -182,14 +191,16 @@ class MainApp(App):
     def add_class_row(self, value):
         if len(self.text_input.text) == 0:
             return
-        self.class_rows.append(ClassRow(widget=self.classes_grid, class_name=self.text_input.text))
+        self.class_rows.append(ClassRow(widget=self.classes_box, class_name=self.text_input.text))
         print([row.class_name for row in self.class_rows])
         self.text_input.text = ''
 
     def add_time_preference(self, value):
         if len(self.time_input.text) == 0:
             return
-        self.class_rows.append(ClassRow(widget=self.classes_grid, color=(1, 0, 0, 1), class_name=self.time_input.text))
+        self.time_prfs.append(
+            ClassRow(parent_list=MainApp.time_prfs, widget=self.time_preferences_box, color=(1, 0, 0, 1),
+                     class_name=self.time_input.text))
         self.time_input.text = ''
 
     def parse(self, value):
@@ -213,25 +224,27 @@ class MainApp(App):
 
 
 class ClassRow():
-    def __init__(self, color=(.6, .6, .6, 1), **kwargs):
+    def __init__(self, parent_list=MainApp.class_rows, color=(.6, .6, .6, 1), **kwargs):
+        self.parent_list = parent_list
         if 'class_name' in kwargs:
             self.class_name = kwargs['class_name'].upper()
         else:
             self.class_name = ''
         if 'widget' in kwargs:
+            self.layout = BoxLayout(size_hint=(1, None), height=50)
             self.widget = kwargs['widget']
-            self.label = MyColoredLabel(text=self.class_name, padding=(50, 20), halign='center', valign='center',
+            self.label = MyColoredLabel(text=self.class_name, halign='center', valign='center',
                                         size_hint=(.6, None), color=color,
                                         height=50)
             self.button = Button(text='Remove', size_hint=(.4, None), height=50)
             self.button.bind(on_press=self.destroy)
-            kwargs['widget'].add_widget(self.label)
-            kwargs['widget'].add_widget(self.button)
+            self.layout.add_widget(self.label)
+            self.layout.add_widget(self.button)
+            kwargs['widget'].add_widget(self.layout)
 
     def destroy(self, value):
-        self.widget.remove_widget(self.label)
-        self.widget.remove_widget(self.button)
-        MainApp.class_rows.remove(self)
+        self.widget.remove_widget(self.layout)
+        self.parent_list.remove(self)
 
 
 if __name__ == '__main__':

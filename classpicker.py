@@ -28,6 +28,7 @@ class ClassPicker():
         self.validate_inputs()
         self.generate_class_set()
         self.get_candidates()
+        self.validate_outputs()
         return self.get_output()
 
     def get_input(self):
@@ -39,7 +40,11 @@ class ClassPicker():
         for pref_class in self.pref_classes:
             self.cursor.execute("SELECT ID FROM DATA WHERE COURSE_NUM = ?", (pref_class,))
             if not len(self.cursor.fetchall()) > 0:
-                raise IOError('One of the inputs is not a valid class name')
+                raise IOError('One of the inputs is not a valid class name!')
+
+    def validate_outputs(self):
+        if not self.best_candidate:
+            raise ValueError('It appears that there is no best candidate.')
 
     def generate_class_set(self):
         for pref_class in self.pref_classes:
