@@ -24,7 +24,7 @@ class RootLayout(BoxLayout):
         self.orientation = 'vertical'
         self.padding = (50, 50)
         with self.canvas.before:
-            Color(0,0,0,1)
+            Color(0, 0, 0, 1)
             self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(size=self._update_rect, pos=self._update_rect)
 
@@ -124,14 +124,30 @@ class MainApp(App):
 
         # The first half of the third layer
         third_layer_1 = BoxLayout(size_hint=(.5, 1), orientation='vertical')
-        grid = GridLayout(cols=2, size_hint=(1, 1))
+        grid = GridLayout(cols=2, size_hint=(1, 1), spacing=[0, 20])
+
+        # Doing the text addition
         self.text_input = text_input = TextInput(multiline=False, size_hint=(.8, None), height=50)
         text_input.bind(on_text_validate=self.add_class_row)
-
         grid.add_widget(text_input)
+
+        # Adding the add_class_button
         add_class_button = Button(text='Enter', size_hint=(.2, None), height=50)
         add_class_button.bind(on_press=self.add_class_row)
         grid.add_widget(add_class_button)
+
+        # Doing the second time input
+        self.time_input = TextInput(text='Time', size_hint=(.8, None), height=50, multiline=False)
+
+        # Adding the enter preference button
+        add_preference_button = Button(text='Enter', size_hint=(.2, None), height=50, on_press=self.add_time_preference)
+
+        grid.add_widget(MyLabel(halign='left', text='Enter your preferences here', size_hint=(1, 1), valign='center'))
+
+        # Adding a label to take up the second space of the grid
+        grid.add_widget(Label(size_hint=(0, 0)))
+        grid.add_widget(self.time_input)
+        grid.add_widget(add_preference_button)
 
         self.results_box = results_box = BoxLayout(orientation='vertical', padding=(10, 0), size_hint=(1, 8))
 
@@ -147,12 +163,13 @@ class MainApp(App):
         self.classes_grid = classes_grid = GridLayout(cols=2, size_hint=(1, 1), padding=(10, 0), spacing=3)
 
         third_layer_2.add_widget(classes_grid)
-        third_layer_2.add_widget(Label(size_hint=(1, .2)))
+
+        # Create time entry
 
         # Create a new grid so it will go like [     Begin] instead of [Begin      ]
-        begin_grid = GridLayout(cols=2, size_hint=(1, .3))
+        begin_grid = GridLayout(cols=2, size_hint=(1, 1), spacing=10)
         begin_grid.add_widget(Label())
-        begin_button = Button(text='Begin', size_hint=(1, 1), on_press=self.begin)
+        begin_button = Button(text='Begin', size_hint=(1, None), height=100, on_press=self.begin)
         begin_grid.add_widget(begin_button)
         third_layer_2.add_widget(begin_grid)
 
@@ -168,6 +185,12 @@ class MainApp(App):
         self.class_rows.append(ClassRow(widget=self.classes_grid, class_name=self.text_input.text))
         print([row.class_name for row in self.class_rows])
         self.text_input.text = ''
+
+    def add_time_preference(self, value):
+        if len(self.time_input.text) == 0:
+            return
+        self.class_rows.append(ClassRow(widget=self.classes_grid, color=(1, 0, 0, 1), class_name=self.time_input.text))
+        self.time_input.text = ''
 
     def parse(self, value):
         parser = data_parser.Parser()
@@ -190,7 +213,7 @@ class MainApp(App):
 
 
 class ClassRow():
-    def __init__(self, **kwargs):
+    def __init__(self, color=(.6, .6, .6, 1), **kwargs):
         if 'class_name' in kwargs:
             self.class_name = kwargs['class_name'].upper()
         else:
@@ -198,7 +221,7 @@ class ClassRow():
         if 'widget' in kwargs:
             self.widget = kwargs['widget']
             self.label = MyColoredLabel(text=self.class_name, padding=(50, 20), halign='center', valign='center',
-                                        size_hint=(.6, None), color=(.6, .6, .6, 1),
+                                        size_hint=(.6, None), color=color,
                                         height=50)
             self.button = Button(text='Remove', size_hint=(.4, None), height=50)
             self.button.bind(on_press=self.destroy)
