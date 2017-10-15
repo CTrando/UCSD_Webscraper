@@ -9,6 +9,7 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 import time
 
+from kivy.uix.popup import Popup
 from kivy.uix.stacklayout import StackLayout
 from kivy.uix.textinput import TextInput
 from kivy.uix.widget import Widget
@@ -17,6 +18,7 @@ from classpicker import ClassPicker
 from data_util import data_cleaner, data_parser
 
 Config.set('graphics', 'font-name', 'Times')
+Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 
 
 class RootLayout(BoxLayout):
@@ -216,12 +218,16 @@ class MainApp(App):
         class_picker = ClassPicker()
         classes = [row.class_name for row in self.class_rows]
         best_classes = class_picker.pick(classes)
+        results_box = BoxLayout(orientation='vertical')
         for best_class in best_classes:
             sub_class_str = ''
             for sub_class in best_class.subclasses.values():
                 sub_class_str += str(sub_class) + '\n'
-            self.results_box.add_widget(MyLabel(text=sub_class_str, font_size='10sp', size_hint=(1, 1)))
-
+            results_box.add_widget(MyLabel(text=sub_class_str, font_size='14sp', size_hint=(1, 1)))
+        popup = Popup(title='Results',
+                          content=results_box,
+                          size_hint=(.8,.8))
+        popup.open()
 
 class ClassRow():
     def __init__(self, parent_list=MainApp.class_rows, color=(.6, .6, .6, 1), **kwargs):

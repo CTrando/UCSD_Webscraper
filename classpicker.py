@@ -25,9 +25,7 @@ class ClassPicker():
         if intervals and len(intervals) > 0:
             global INTERVALS
             INTERVALS = intervals
-        # if not inputs:
-        #     self.get_input()
-        # else:
+
         self.pref_classes = [i.upper() for i in inputs]
         self.validate_inputs()
         self.generate_class_set()
