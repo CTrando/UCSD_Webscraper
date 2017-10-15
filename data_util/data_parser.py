@@ -1,19 +1,31 @@
-import bs4
 import os
 import sqlite3
-from settings import DEPARTMENTS, HTML_STORAGE
+import bs4
+import time
+from settings import HTML_STORAGE
 
 
 class Parser:
     def __init__(self):
+        # initializing database
+        os.chdir('C:/Users/ctran/PycharmProjects/UCSD_Webscraper')
+        self.connection = sqlite3.connect('data/data.db')
+        self.cursor = self.connection.cursor()
+
+        # changing dir for HTML
         self.dir = os.path.join(os.curdir, HTML_STORAGE)
         os.chdir(self.dir)
         self.buffer_buffer = []
         self.buffer = []
 
     def parse(self):
+        print('Beginning parsing.')
+        curr_time = time.time()
         self.parse_data()
         self.insert_data()
+        self.close()
+        fin_time = time.time()
+        print('Finished parsing in {} seconds.'.format(fin_time-curr_time))
 
     def parse_data(self):
         for root, dirs, files in os.walk(os.curdir):
@@ -62,30 +74,38 @@ class Parser:
                 location, room, instructor,
                 description
             ]
+            # passing in a list which will be converted to tuple
             info = self.validate_info(info)
-            self.buffer_buffer.append(info)
-            print('*' * 10)
-            print(info)
+            if info not in self.buffer_buffer:
+                self.buffer_buffer.append(info)
+                print('*' * 10)
+                print(info)
 
-    def validate_info(self, info):
-        if info[1] == 'FINAL':
-            info[1] = None
-            info[2] = 'FINAL'
-        return tuple(info)
+    """
+    Method to make final alterations to the dataset. 
+    Will put data in cleanable format; however, will not remove
+    data. 
+    """
+
+    def validate_info(self, data):
+        if data[1] == 'FINAL':
+            data[1] = None
+            data[2] = 'FINAL'
+        return tuple(data)
 
     def insert_data(self):
-        os.chdir('C:/Users/ctran/PycharmProjects/UCSD_Webscraper')
-        connection = sqlite3.connect('data/data.db')
-        cursor = connection.cursor()
-        cursor.execute("DROP TABLE IF EXISTS CLASSES")
-        cursor.execute("CREATE TABLE CLASSES"
-                       "(ID INTEGER PRIMARY KEY, COURSE_NUM REAL, COURSE_ID TEXT, "
-                       "TYPE TEXT, DAYS TEXT, TIME TEXT, LOCATION TEXT, ROOM TEXT, "
-                       "INSTRUCTOR TEXT, DESCRIPTION TEXT,"
-                       "UNIQUE(COURSE_NUM, COURSE_ID, TYPE, DAYS, TIME, LOCATION, ROOM, INSTRUCTOR))")
+        self.cursor.execute("DROP TABLE IF EXISTS CLASSES")
+        self.cursor.execute("CREATE TABLE CLASSES"
+                            "(ID INTEGER PRIMARY KEY, COURSE_NUM REAL, COURSE_ID TEXT, "
+                            "TYPE TEXT, DAYS TEXT, TIME TEXT, LOCATION TEXT, ROOM TEXT, "
+                            "INSTRUCTOR TEXT, DESCRIPTION TEXT,"
+                            "UNIQUE(COURSE_NUM, COURSE_ID, TYPE, DAYS, TIME, LOCATION, ROOM, INSTRUCTOR))")
 
+
+        self.cursor.execute("BEGIN TRANSACTION")
         for info in self.buffer_buffer:
-            cursor.execute("INSERT OR IGNORE INTO CLASSES VALUES(?,?,?,?,?,?,?,?, ?, ?)", (None,) + info)
+            self.cursor.execute("INSERT OR IGNORE INTO CLASSES VALUES(?,?,?,?,?,?,?,?, ?, ?)", (None,) + info)
 
-        connection.commit()
-        connection.close()
+    def close(self):
+        self.connection.commit()
+        self.connection.close()

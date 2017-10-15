@@ -1,12 +1,16 @@
 import sqlite3
 import sys
 
+import os
+
 from classutils import *
 from settings import INTERVALS
 
 
 class ClassPicker():
     def __init__(self):
+        # initializing database
+        os.chdir('C:/Users/ctran/PycharmProjects/UCSD_Webscraper')
         self.database = sqlite3.connect('data/data.db')
         self.database.row_factory = sqlite3.Row
         self.cursor = self.database.cursor()

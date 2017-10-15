@@ -1,4 +1,10 @@
 import sqlite3
+import time
+
+"""
+Convenience class for holding the keys to the CLASSES table representing
+the subclasses in this specific class.
+"""
 
 
 class ClassHolder:
@@ -93,6 +99,7 @@ class Cleaner:
     def clean(self):
         self.begin()
         self.create_links()
+        self.validate_database()
         self.close()
 
     def begin(self):
@@ -112,7 +119,7 @@ class Cleaner:
                                 "FROM CLASSES WHERE COURSE_NUM = ?"
                                 "ORDER BY ID", course_num)
 
-            '''
+            """
                 The strategy here is to loop through each class data set (Every class that has the same 
                 course num), and then if it is a lecture, create a new row inside the database with the
                 lab, discussion, and final keys not filled up 
@@ -123,11 +130,10 @@ class Cleaner:
                 and populate it with the correct key.
                 
                 This is how we deal with discussions, labs, and finals sometimes matching to multiple lectures.
-            '''
+            """
 
             for class_info in self.cursor.fetchall():
-                print(class_info)
-                print(course_num)
+                print(str(course_num + class_info))
                 if ClassHolder.is_canceled(class_info) or ClassHolder.is_review_session(class_info):
                     continue
                 if ClassHolder.get_type(class_info) == 'LE':
@@ -140,8 +146,16 @@ class Cleaner:
                     ClassHolder.insert_lab(self.cursor, course_num[0], class_info[0])
                 elif ClassHolder.get_type(class_info) == 'SE':
                     ClassHolder.insert_seminar(self.cursor, course_num[0], class_info[0])
-                self.database.commit()
             print('*' * 10)
+
+    def validate_database(self):
+        print('Begin validating data.')
+        curr_time = time.time()
+        self.cursor.execute(
+            'DELETE FROM DATA WHERE COURSE_NUM ISNULL OR LECTURE_KEY ISNULL AND DISCUSSION_KEY ISNULL '
+            'AND SEMINAR_KEY ISNULL AND LAB_KEY ISNULL')
+        fin_time = time.time()
+        print('Finished validating data in {} seconds.'.format(fin_time - curr_time))
 
     def close(self):
         self.database.commit()
