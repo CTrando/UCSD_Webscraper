@@ -18,7 +18,7 @@ from classpicker import ClassPicker
 from data_util import data_cleaner, data_parser
 
 Config.set('graphics', 'font-name', 'Times')
-Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
+Config.set('input', 'mouse', 'mouse, multitouch_on_demand')
 
 
 class RootLayout(BoxLayout):
@@ -27,8 +27,9 @@ class RootLayout(BoxLayout):
         self.orientation = 'vertical'
         self.padding = (50, 50)
         with self.canvas.before:
-            self.rect = Rectangle(size=self.size, pos=self.pos, source='background_image.png')
-            Color(0, 0, 0, 1)
+            Color(.9, .9, .9, 1)
+            self.rect = Rectangle(size=self.size, pos=self.pos)
+            self.rect.source = 'logo_1.jpg'
         self.bind(size=self._update_rect, pos=self._update_rect)
 
     def _update_rect(self, instance, value):
@@ -38,9 +39,15 @@ class RootLayout(BoxLayout):
 
 
 class MyLabel(Label):
-    def __init__(self, **kwargs):
+    def __init__(self, background=None, color=(0, 0, .4, 1), **kwargs):
         super(MyLabel, self).__init__(**kwargs)
+        self.color = color
+
         self.rect = RoundedRectangle(size=self.size, pos=self.pos)
+        if background:
+            with self.canvas.before:
+                self.rect = RoundedRectangle(size=self.size, pos=self.pos)
+                self.rect.source = background
         self.bind(size=self._update_rect, pos=self._update_rect)
 
     def _update_rect(self, instance, value):
@@ -50,12 +57,15 @@ class MyLabel(Label):
 
 
 class BackgroundBoxLayout(BoxLayout):
-    def __init__(self, background=None, **kwargs):
+    def __init__(self, color=None, background=None, **kwargs):
         super().__init__(**kwargs)
 
         with self.canvas.before:
             self.rect = Rectangle(size=self.size, pos=self.pos)
-            self.rect.source = background
+            if color:
+                Color(color[0], color[1], color[2], color[3])
+            if background:
+                self.rect.source = background
         self.bind(size=self._update_rect, pos=self._update_rect)
 
     def _update_rect(self, instance, value):
@@ -96,6 +106,12 @@ class MyGridLayout(GridLayout):
         self.rect.size = instance.size
 
 
+class MyButton(Button):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.background_color = (0, .5, 1, 1)
+
+
 class MainApp(App):
     class_rows = []
     time_prfs = []
@@ -109,7 +125,7 @@ class MainApp(App):
 
         # First layer holds the title and the time
         self.first_layer = first_layer = BoxLayout(size_hint=(1, 1))
-        title_label = MyLabel(text='UCSD Web Scraper', font_size='32sp', halign='left', size_hint=(.7, 1), valign='top')
+        title_label = MyLabel(text='UCSD Web Scraper', font_size='32sp', halign='left', size_hint=(.3, 1), valign='top')
         time_label = TimeLabel(text='Hi', font_size=14, halign='right',
                                size_hint=(.3, 1), valign='top')
         first_layer.add_widget(title_label)
@@ -134,7 +150,7 @@ class MainApp(App):
         text_box.add_widget(text_input)
 
         # Adding the add_class_button
-        add_class_button = Button(text='Enter', size_hint=(.2, None), height=50)
+        add_class_button = MyButton(text='Enter', size_hint=(.2, None), height=50)
         add_class_button.bind(on_press=self.add_class_row)
         text_box.add_widget(add_class_button)
 
@@ -148,22 +164,23 @@ class MainApp(App):
         self.time_input = TextInput(text='Time', size_hint=(.8, None), height=50, multiline=False)
 
         # Adding the enter preference button
-        add_preference_button = Button(text='Enter', size_hint=(.2, None), height=50, on_press=self.add_time_preference)
+        add_preference_button = MyButton(text='Enter', size_hint=(.2, None), height=50,
+                                         on_press=self.add_time_preference)
 
         time_box.add_widget(self.time_input)
         time_box.add_widget(add_preference_button)
         third_layer_1.add_widget(time_box)
 
         temp_box = BoxLayout(size_hint=(1, 5))
-        self.time_preferences_box = time_preference_box = StackLayout(padding=(0,10), spacing=3, size_hint=(1, 1))
+        self.time_preferences_box = time_preference_box = StackLayout(padding=(0, 10), spacing=3, size_hint=(1, 1))
         temp_box.add_widget(self.time_preferences_box)
 
         third_layer_1.add_widget(temp_box)
 
         self.results_box = results_box = BoxLayout(orientation='vertical', padding=(10, 0), size_hint=(1, 8))
 
-        third_layer_1.add_widget(Button(text='Parse', size_hint=(1, 1), on_press=self.parse))
-        third_layer_1.add_widget(Button(text='Clean', size_hint=(1, 1), on_press=self.clean))
+        third_layer_1.add_widget(MyButton(text='Parse', size_hint=(1, 1), on_press=self.parse))
+        third_layer_1.add_widget(MyButton(text='Clean', size_hint=(1, 1), on_press=self.clean))
 
         # The second half of the third layer
         third_layer_2 = BoxLayout(size_hint=(.5, 1), orientation='vertical')
@@ -171,7 +188,7 @@ class MainApp(App):
         third_layer_2.add_widget(MyLabel(text='', valign='center', size_hint=(1, 1)))
 
         # Grid with all the classes
-        self.classes_box = classes_box = StackLayout(padding=(10,0), spacing=3, size_hint=(1, 12))
+        self.classes_box = classes_box = StackLayout(padding=(10, 0), spacing=3, size_hint=(1, 12))
 
         third_layer_2.add_widget(classes_box)
 
@@ -180,7 +197,7 @@ class MainApp(App):
         # Create a new grid so it will go like [     Begin] instead of [Begin      ]
         begin_box = BoxLayout(size_hint=(1, 1), spacing=10)
         begin_box.add_widget(Label())
-        begin_button = Button(text='Begin', size_hint=(1, None), height=100, on_press=self.begin)
+        begin_button = MyButton(text='Begin', size_hint=(1, None), height=100, on_press=self.begin)
         begin_box.add_widget(begin_button)
         third_layer_2.add_widget(begin_box)
 
@@ -193,7 +210,8 @@ class MainApp(App):
     def add_class_row(self, value):
         if len(self.text_input.text) == 0:
             return
-        self.class_rows.append(ClassRow(widget=self.classes_box, class_name=self.text_input.text))
+        self.class_rows.append(
+            ClassRow(widget=self.classes_box, color=(.95, .95, .95, 1), class_name=self.text_input.text))
         print([row.class_name for row in self.class_rows])
         self.text_input.text = ''
 
@@ -201,7 +219,7 @@ class MainApp(App):
         if len(self.time_input.text) == 0:
             return
         self.time_prfs.append(
-            ClassRow(parent_list=MainApp.time_prfs, widget=self.time_preferences_box, color=(1, 0, 0, 1),
+            ClassRow(parent_list=MainApp.time_prfs, widget=self.time_preferences_box, color=(.8, .8, .92, 1),
                      class_name=self.time_input.text))
         self.time_input.text = ''
 
@@ -213,21 +231,46 @@ class MainApp(App):
         cleaner = data_cleaner.Cleaner()
         cleaner.clean()
 
+    def format_class(self, cl):
+        ret = []
+        data = cl.data
+        if 'COURSE_NUM' in data:
+            ret.append(data['COURSE_NUM'])
+        if 'TYPE' in data:
+            ret.append(data['TYPE'])
+        if 'DAYS' in data:
+            ret.append(data['DAYS'])
+        if 'TIME' in data:
+            ret.append(data['TIME'])
+        return ' '.join(ret)
+
     def begin(self, value):
         self.results_box.clear_widgets()
         class_picker = ClassPicker()
         classes = [row.class_name for row in self.class_rows]
         best_classes = class_picker.pick(classes)
-        results_box = BoxLayout(orientation='vertical')
+
+        results_box = StackLayout(size_hint=(1, 1), padding=[10, 10])
+        popup = Popup(title='Results', title_size='24sp', title_color=(0, 0, 0, 1), size_hint=(.8, .8))
+        popup.background = 'logo_1.jpg'
+        popup.add_widget(results_box)
         for best_class in best_classes:
+            title = ''
             sub_class_str = ''
+            temp_box = BoxLayout(orientation='vertical', size_hint=(.5, None))
             for sub_class in best_class.subclasses.values():
-                sub_class_str += str(sub_class) + '\n'
-            results_box.add_widget(MyLabel(text=sub_class_str, font_size='14sp', size_hint=(1, 1)))
-        popup = Popup(title='Results',
-                          content=results_box,
-                          size_hint=(.8,.8))
+                title = sub_class.data['DESCRIPTION']
+                sub_class_str += self.format_class(sub_class) + '\n'
+            temp_box.add_widget(
+                MyLabel(text=title, color=(.4, .4, .4, 1), valign='top', halign='left', size_hint=(1, .2)))
+            temp_box.add_widget(
+                MyLabel(text=sub_class_str, color=(.4, .4, .4, 1), font_size='14sp', valign='top', halign='left',
+                        size_hint=(1, .8)))
+            results_box.add_widget(temp_box)
+
+        # Making the popup
         popup.open()
+
 
 class ClassRow():
     def __init__(self, parent_list=MainApp.class_rows, color=(.6, .6, .6, 1), **kwargs):
@@ -242,7 +285,7 @@ class ClassRow():
             self.label = MyColoredLabel(text=self.class_name, halign='center', valign='center',
                                         size_hint=(.6, None), color=color,
                                         height=50)
-            self.button = Button(text='Remove', size_hint=(.4, None), height=50)
+            self.button = MyButton(text='Remove', size_hint=(.4, None), height=50)
             self.button.bind(on_press=self.destroy)
             self.layout.add_widget(self.label)
             self.layout.add_widget(self.button)
