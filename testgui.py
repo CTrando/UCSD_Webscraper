@@ -16,6 +16,7 @@ from kivy.uix.widget import Widget
 
 from classpicker import ClassPicker
 from data_util import data_cleaner, data_parser
+from timeutils import TimeInterval
 
 Config.set('graphics', 'font-name', 'Times')
 Config.set('input', 'mouse', 'mouse, multitouch_on_demand')
@@ -219,7 +220,8 @@ class MainApp(App):
         if len(self.time_input.text) == 0:
             return
         self.time_prfs.append(
-            ClassRow(parent_list=MainApp.time_prfs, widget=self.time_preferences_box, color=(.8, .8, .92, 1),
+            ClassRow(parent_list=MainApp.time_prfs, widget=self.time_preferences_box,
+                     color=(.8, .8, .92, 1),
                      class_name=self.time_input.text))
         self.time_input.text = ''
 
@@ -248,7 +250,9 @@ class MainApp(App):
         self.results_box.clear_widgets()
         class_picker = ClassPicker()
         classes = [row.class_name for row in self.class_rows]
-        best_classes = class_picker.pick(classes)
+        intervals = [TimeInterval(None, row.class_name)for row in self.time_prfs]
+
+        best_classes = class_picker.pick(inputs=classes, intervals=intervals)
 
         results_box = StackLayout(size_hint=(1, 1), padding=[10, 10])
         popup = Popup(title='Results', title_size='24sp', title_color=(0, 0, 0, 1), size_hint=(.8, .8))

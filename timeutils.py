@@ -2,6 +2,7 @@ PRESET_DAYS = ['M', 'Tu', 'W', 'Th', 'F']
 from datetime import datetime, date
 from datetime import time as time
 
+
 class TimeInterval:
     """
     Expects day_col formatted as combinations of PRESET_DAYS
@@ -28,10 +29,12 @@ class TimeInterval:
         if time_col.find('-') == -1:
             return []
         ret_times = []
-        for b_time in time_col.split('-'):
-            b_time += 'm'
-            g_time = datetime.strptime(b_time, '%I:%M%p')
-            ret_times.append(g_time)
+        t_intervals = time_col.split(' ')
+        for t_interval in t_intervals:
+            for hour_time in t_interval.split('-'):
+                hour_time += 'm'
+                formatted_interval = datetime.strptime(hour_time, '%I:%M%p')
+                ret_times.append(formatted_interval)
         return ret_times
 
     def overlaps_times_and_days(self, other):
@@ -71,8 +74,8 @@ class TimeInterval:
         other_start = other.times[0]
         other_end = other.times[1]
 
-        one = abs((my_start - other_end)).total_seconds()/3600
-        two = abs((my_end - other_start).total_seconds()/3600)
+        one = abs((my_start - other_end)).total_seconds() / 3600
+        two = abs((my_end - other_start).total_seconds() / 3600)
 
         return max(1, min(6, min(one, two)))
 
@@ -94,4 +97,3 @@ class DefaultTimeInterval(TimeInterval):
 
     def distance_from(self, other):
         return 1
-
