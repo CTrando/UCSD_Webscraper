@@ -1,8 +1,10 @@
 from kivy import Config
+from kivy.animation import Animation
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.graphics import Color, Rectangle
 from kivy.graphics.vertex_instructions import RoundedRectangle
+from kivy.properties import StringProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
@@ -28,9 +30,9 @@ class RootLayout(BoxLayout):
         self.orientation = 'vertical'
         self.padding = (50, 50)
         with self.canvas.before:
-            Color(.9, .9, .9, 1)
+            Color(.95, .95, .95, 1)
             self.rect = Rectangle(size=self.size, pos=self.pos)
-            self.rect.source = 'logo_1.jpg'
+            self.rect.source = 'background_logo.jpg'
         self.bind(size=self._update_rect, pos=self._update_rect)
 
     def _update_rect(self, instance, value):
@@ -126,9 +128,17 @@ class MainApp(App):
 
         # First layer holds the title and the time
         self.first_layer = first_layer = BoxLayout(size_hint=(1, 1))
-        title_label = MyLabel(text='UCSD Web Scraper', font_size='32sp', halign='left', size_hint=(.3, 1), valign='top')
-        time_label = TimeLabel(text='Hi', font_size=14, halign='right',
+        title_label = MyLabel(text='UCSD Web Scraper', font_size='32sp', halign='left', size_hint=(.8, 1), valign='top')
+        title_label.y = 800
+
+        time_label = TimeLabel(font_size=14, halign='right',
                                size_hint=(.3, 1), valign='top')
+        time_label.update()
+        time_label.opacity = 0
+
+        Animation(y=500, duration=1).start(title_label)
+        Animation(opacity=1, duration=1.5).start(time_label)
+
         first_layer.add_widget(title_label)
         first_layer.add_widget(time_label)
         root.add_widget(first_layer)
@@ -147,6 +157,7 @@ class MainApp(App):
         # Doing the text addition
         text_box = BoxLayout(size_hint=(1, 1))
         self.text_input = text_input = TextInput(multiline=False, size_hint=(.8, None), height=50)
+
         text_input.bind(on_text_validate=self.add_class_row)
         text_box.add_widget(text_input)
 
@@ -162,7 +173,8 @@ class MainApp(App):
         time_box = BoxLayout(size_hint=(1, 1))
 
         # Doing the second time input
-        self.time_input = TextInput(text='Time', size_hint=(.8, None), height=50, multiline=False)
+        self.time_input = TextInput(size_hint=(.8, None), height=50, multiline=False)
+        self.time_input.bind(on_text_validate=self.add_time_preference)
 
         # Adding the enter preference button
         add_preference_button = MyButton(text='Enter', size_hint=(.2, None), height=50,
@@ -212,7 +224,7 @@ class MainApp(App):
         if len(self.text_input.text) == 0:
             return
         self.class_rows.append(
-            ClassRow(widget=self.classes_box, color=(.95, .95, .95, 1), class_name=self.text_input.text))
+            ClassRow(widget=self.classes_box, color=(.97, .97, .97, 1), class_name=self.text_input.text))
         print([row.class_name for row in self.class_rows])
         self.text_input.text = ''
 
@@ -250,14 +262,23 @@ class MainApp(App):
         self.results_box.clear_widgets()
         class_picker = ClassPicker()
         classes = [row.class_name for row in self.class_rows]
-        intervals = [TimeInterval(None, row.class_name)for row in self.time_prfs]
+        intervals = [TimeInterval(None, row.class_name) for row in self.time_prfs]
 
-        best_classes = class_picker.pick(inputs=classes, intervals=intervals)
-
-        results_box = StackLayout(size_hint=(1, 1), padding=[10, 10])
+        # Creating popup and results content
         popup = Popup(title='Results', title_size='24sp', title_color=(0, 0, 0, 1), size_hint=(.8, .8))
-        popup.background = 'logo_1.jpg'
+        results_box = StackLayout(size_hint=(1, 1), padding=[10, 10])
+        popup.background = 'popup_background_logo.jpg'
         popup.add_widget(results_box)
+
+        best_classes = []
+        # picking the class after making the widgets to allow for error handling
+        try:
+            best_classes = class_picker.pick(inputs=classes, intervals=intervals)
+        except IOError as e:
+            results_box.add_widget(MyLabel(text=str(e), size_hint=(1,1), valign='top'))
+        except RuntimeError as e:
+            results_box.add_widget(MyLabel(text=str(e), size_hint=(1,1), valign='top'))
+
         for best_class in best_classes:
             title = ''
             sub_class_str = ''

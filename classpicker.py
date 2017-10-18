@@ -33,6 +33,9 @@ class ClassPicker():
         self.validate_outputs()
         return self.get_output()
 
+    """
+    Command line method for grabbing classes from input.
+    """
     def get_input(self):
         my_input = input('Enter the classes that you want like so (CSE 3, CSE 8A, CSE 8B)')
         self.pref_classes = my_input.split(', ')
@@ -46,7 +49,7 @@ class ClassPicker():
 
     def validate_outputs(self):
         if not self.best_candidate:
-            raise ValueError('It appears that there is no best candidate.')
+            raise RuntimeError('It appears that there is no best candidate.')
 
     def generate_class_set(self):
         for pref_class in self.pref_classes:
