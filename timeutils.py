@@ -13,10 +13,13 @@ class TimeInterval:
         self.sanitize_inputs(day_col, time_col)
 
     def sanitize_inputs(self, day_col, time_col):
-        if day_col:
-            self.days = self.get_days(day_col)
-        if time_col:
-            self.times = self.get_times(time_col)
+        try:
+            if day_col:
+                self.days = self.get_days(day_col)
+            if time_col:
+                self.times = self.get_times(time_col)
+        except ValueError:
+            raise ValueError('The input time is not in the correct format!')
 
     def get_days(self, day_list):
         ret_days = []

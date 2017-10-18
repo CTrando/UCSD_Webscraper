@@ -26,7 +26,7 @@ class ClassPicker():
             global INTERVALS
             INTERVALS = intervals
 
-        self.pref_classes = [i.upper() for i in inputs]
+        self.pref_classes = [i.upper().rstrip() for i in inputs]
         self.validate_inputs()
         self.generate_class_set()
         self.get_candidates()

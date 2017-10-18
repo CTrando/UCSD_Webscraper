@@ -173,7 +173,7 @@ class MainApp(App):
         time_box = BoxLayout(size_hint=(1, 1))
 
         # Doing the second time input
-        self.time_input = TextInput(size_hint=(.8, None), height=50, multiline=False)
+        self.time_input = TextInput(hint_text='Ex: 8:00a-5:00p', size_hint=(.8, None), height=50, multiline=False)
         self.time_input.bind(on_text_validate=self.add_time_preference)
 
         # Adding the enter preference button
@@ -223,10 +223,19 @@ class MainApp(App):
     def add_class_row(self, value):
         if len(self.text_input.text) == 0:
             return
+        self.text_input.text = self.text_input.text.rstrip().strip()
+
         self.class_rows.append(
             ClassRow(widget=self.classes_box, color=(.97, .97, .97, 1), class_name=self.text_input.text))
         print([row.class_name for row in self.class_rows])
+        Clock.schedule_once(self.focus_text)
         self.text_input.text = ''
+
+    def focus_text(self, value):
+        self.text_input.focus = True
+
+    def focus_time_input(self, value):
+        self.time_input.focus = True
 
     def add_time_preference(self, value):
         if len(self.time_input.text) == 0:
@@ -235,6 +244,8 @@ class MainApp(App):
             ClassRow(parent_list=MainApp.time_prfs, widget=self.time_preferences_box,
                      color=(.8, .8, .92, 1),
                      class_name=self.time_input.text))
+        self.time_input.focus = True
+        Clock.schedule_once(self.focus_time_input)
         self.time_input.text = ''
 
     def parse(self, value):
@@ -260,9 +271,6 @@ class MainApp(App):
 
     def begin(self, value):
         self.results_box.clear_widgets()
-        class_picker = ClassPicker()
-        classes = [row.class_name for row in self.class_rows]
-        intervals = [TimeInterval(None, row.class_name) for row in self.time_prfs]
 
         # Creating popup and results content
         popup = Popup(title='Results', title_size='24sp', title_color=(0, 0, 0, 1), size_hint=(.8, .8))
@@ -273,10 +281,15 @@ class MainApp(App):
         best_classes = []
         # picking the class after making the widgets to allow for error handling
         try:
+            class_picker = ClassPicker()
+            classes = [row.class_name for row in self.class_rows]
+            intervals = [TimeInterval(None, row.class_name) for row in self.time_prfs]
             best_classes = class_picker.pick(inputs=classes, intervals=intervals)
         except IOError as e:
             results_box.add_widget(MyLabel(text=str(e), size_hint=(1,1), valign='top'))
         except RuntimeError as e:
+            results_box.add_widget(MyLabel(text=str(e), size_hint=(1,1), valign='top'))
+        except ValueError as e:
             results_box.add_widget(MyLabel(text=str(e), size_hint=(1,1), valign='top'))
 
         for best_class in best_classes:
