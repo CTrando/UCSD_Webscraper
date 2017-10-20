@@ -11,8 +11,8 @@ class DepartmentScraper:
         self.browser = webdriver.Chrome()
         os.chdir(HOME_DIR)
 
-        from settings import DATABASE_DIR
-        self.database = sqlite3.connect(DATABASE_DIR)
+        from settings import DATABASE_PATH
+        self.database = sqlite3.connect(DATABASE_PATH)
         self.database.row_factory = sqlite3.Row
         self.cursor = self.database.cursor()
 

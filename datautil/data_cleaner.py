@@ -1,7 +1,7 @@
 import sqlite3
 import time
 
-from settings import DATABASE_DIR
+from settings import DATABASE_PATH
 
 """
 Convenience class for holding the keys to the CLASSES table representing
@@ -95,7 +95,7 @@ class ClassHolder:
 
 class Cleaner:
     def __init__(self):
-        self.database = sqlite3.connect(DATABASE_DIR)
+        self.database = sqlite3.connect(DATABASE_PATH)
         self.cursor = self.database.cursor()
 
     def clean(self):

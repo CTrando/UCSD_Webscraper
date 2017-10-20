@@ -1,4 +1,4 @@
-from timeutils import *
+from timeutil.timeutils import *
 
 
 class ClassTemplate:

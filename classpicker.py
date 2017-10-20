@@ -1,16 +1,16 @@
+import os
 import sqlite3
 import sys
-import os
 
-from classutils import *
-from settings import INTERVALS, DATABASE_DIR, DEFAULT_INTERVAL, HOME_DIR
+from classutil.classutils import *
+from settings import DATABASE_PATH, INTERVALS, DEFAULT_INTERVAL, HOME_DIR
 
 
 class ClassPicker():
     def __init__(self):
         # initializing database
         os.chdir(HOME_DIR)
-        self.database = sqlite3.connect(DATABASE_DIR)
+        self.database = sqlite3.connect(DATABASE_PATH)
         self.database.row_factory = sqlite3.Row
         self.cursor = self.database.cursor()
 

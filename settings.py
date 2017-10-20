@@ -1,11 +1,14 @@
-import sqlite3
 import os
-from timeutils import TimeInterval
+import sqlite3
+
+from timeutil.timeutils import TimeInterval
 
 # Where the directory is placed
 HOME_DIR = os.getcwd()
 # Database directory
-DATABASE_DIR = 'database/data.db'
+DATABASE_PATH = 'database/data.db'
+# Image directory
+IMAGE_DIR = 'images'
 
 # URLs
 DEPARTMENT_URL = 'https://act.ucsd.edu/scheduleOfClasses/scheduleOfClassesStudent.htm'
@@ -15,14 +18,14 @@ WEBREG_URL = 'https://act.ucsd.edu/webreg2/start'
 DEPARTMENTS = []
 
 # Connect to the department database and see if it has names
-database = sqlite3.connect(DATABASE_DIR)
+database = sqlite3.connect(DATABASE_PATH)
 cursor = database.cursor()
 cursor.execute('SELECT DEPT_CODE FROM DEPARTMENT')
 depts = cursor.fetchall()
 
 # If no departments in database, then scrape
 if len(depts) <= 0:
-    import departmentscraper
+    from scraper import departmentscraper
 
     dept_scraper = departmentscraper.DepartmentScraper()
     dept_scraper.scrape()

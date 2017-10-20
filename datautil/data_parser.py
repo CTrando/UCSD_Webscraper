@@ -2,14 +2,14 @@ import os
 import sqlite3
 import bs4
 import time
-from settings import HTML_STORAGE, DATABASE_DIR, HOME_DIR
+from settings import HTML_STORAGE, DATABASE_PATH, HOME_DIR
 
 
 class Parser:
     def __init__(self):
         # initializing database
         os.chdir(HOME_DIR)
-        self.connection = sqlite3.connect(DATABASE_DIR)
+        self.connection = sqlite3.connect(DATABASE_PATH)
         self.cursor = self.connection.cursor()
 
         # changing dir for HTML

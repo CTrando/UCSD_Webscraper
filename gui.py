@@ -1,221 +1,389 @@
-#!/usr/bin/env python3
+import time
 
-from tkinter import *
-from tkinter import font
-import kivy
+from kivy import Config
+from kivy.animation import Animation
+from kivy.app import App
+from kivy.clock import Clock
+from kivy.graphics import Color, Rectangle
+from kivy.graphics.vertex_instructions import RoundedRectangle
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.label import Label
+from kivy.uix.popup import Popup
+from kivy.uix.stacklayout import StackLayout
+from kivy.uix.textinput import TextInput
 
 from classpicker import ClassPicker
-import scraper
-from timeutils import TimeInterval
+from datautil import data_cleaner, data_parser
+from settings import IMAGE_DIR
+from timeutil.timeutils import TimeInterval
+from scraper import scraper
+
+Config.set('graphics', 'font-name', 'Times')
+Config.set('input', 'mouse', 'mouse, multitouch_on_demand')
 
 
-class Program(Frame):
-    widgets = {}
+class RootLayout(BoxLayout):
+    def __init__(self, **kwargs):
+        super(RootLayout, self).__init__(**kwargs)
+        self.orientation = 'vertical'
+        self.padding = (50, 50)
+        with self.canvas.before:
+            Color(.95, .95, .95, 1)
+            self.rect = Rectangle(size=self.size, pos=self.pos)
+            self.rect.source = IMAGE_DIR + '/background_logo.jpg'
+        self.bind(size=self._update_rect, pos=self._update_rect)
 
-    def __init__(self, master=None):
-        super(Program, self).__init__(master)
-        master.title('UCSD Web Registration Scraper')
-        self.grid(padx=(20, 20), pady=(20, 20))
-        master.minsize(width=720, height=480)
-        master.maxsize(width=1920, height=1280)
-        self.classes = []
-        self.class_rows = []
-        self.time_preferences = []
-        self.results = []
-        Program.widgets['classes'] = self.class_rows
-        self.class_num = 0
-        self.row_class_num = 2
-        self.make_widgets(master)
+    def _update_rect(self, instance, value):
+        self.rect.pos = instance.pos
+        self.rect.size = instance.size
+        print(self.rect.size)
 
-    def make_widgets(self, master):
-        self.preference_input = StringVar()
-        self.class_input = StringVar()
-        self.dept_input = StringVar()
-        title_font = font.Font(family='Arial', size=25)
 
-        self.text_box = Entry(self, textvariable=self.class_input)
-        self.text_box.grid(row=2, column=0, columnspan=6, sticky=E + W)
-        self.text_box.bind('<Return>', self.add_class)
-        Program.widgets['text_box'] = self.text_box
+class MyLabel(Label):
+    def __init__(self, background=None, color=(0, 0, .4, 1), **kwargs):
+        super(MyLabel, self).__init__(**kwargs)
+        self.color = color
 
-        self.title = Label(self)
-        self.title['text'] = 'UCSD Web Registration Scraper'
-        self.title['font'] = title_font
-        self.title.grid(row=0, column=0, columnspan=10, sticky=W)
-        Program.widgets['title'] = self.title
+        self.rect = RoundedRectangle(size=self.size, pos=self.pos)
+        if background:
+            with self.canvas.before:
+                self.rect = RoundedRectangle(size=self.size, pos=self.pos)
+                self.rect.source = background
+        self.bind(size=self._update_rect, pos=self._update_rect)
 
-        self.class_label = Label(self)
-        self.class_label['text'] = 'Selected Classes'
-        self.class_label.grid(row=1, column=10, sticky=W)
-        Program.widgets['class_label'] = self.class_label
+    def _update_rect(self, instance, value):
+        self.text_size = instance.size
+        self.rect.pos = instance.pos
+        self.rect.size = instance.size
 
-        self.enter_class_label = Label(self)
-        self.enter_class_label['text'] = 'Enter in your classes here'
-        self.enter_class_label.grid(row=1, column=0, columnspan=10, sticky=W)
-        Program.widgets['enter_class_label'] = self.enter_class_label
 
-        self.enter = Button(self)
-        self.enter['text'] = 'Click to add your class'
-        self.enter['command'] = self.add_class
-        self.enter.grid(row=3, column=0, columnspan=6, sticky=E + W)
-        Program.widgets['enter'] = self.enter
+class BackgroundBoxLayout(BoxLayout):
+    def __init__(self, color=None, background=None, **kwargs):
+        super().__init__(**kwargs)
 
-        self.start = Button(self)
-        self.start['text'] = 'Start generating'
-        self.start['command'] = self.run
-        self.start.grid(row=4, column=0, columnspan=6, sticky=E + W)
-        Program.widgets['start'] = self.start
+        with self.canvas.before:
+            self.rect = Rectangle(size=self.size, pos=self.pos)
+            if color:
+                Color(color[0], color[1], color[2], color[3])
+            if background:
+                self.rect.source = background
+        self.bind(size=self._update_rect, pos=self._update_rect)
 
-        self.clear_selected_classes = Button(self)
-        self.clear_selected_classes['text'] = 'Clear selected classes'
-        self.clear_selected_classes['command'] = self.clear_classes
-        self.clear_selected_classes.grid(row=5, column=0, columnspan=6, sticky=E + W)
-        Program.widgets['clear_selected_class'] = self.clear_selected_classes
+    def _update_rect(self, instance, value):
+        self.rect.pos = instance.pos
+        self.rect.size = instance.size
 
-        self.clear_result = Button(self)
-        self.clear_result['text'] = 'Clear results'
-        self.clear_result['command'] = self.clear_results
-        self.clear_result.grid(row=6, column=0, columnspan=6, sticky=E + W)
-        Program.widgets['clear_result'] = self.clear_result
 
-        self.quit = Button(self)
-        self.quit['text'] = 'QUIT'
-        self.quit['command'] = root.destroy
-        self.quit.grid(row=7, column=0, columnspan=6, sticky=E + W)
+class MyColoredLabel(MyLabel):
+    def __init__(self, color=None, **kwargs):
+        super(MyColoredLabel, self).__init__(**kwargs)
+        with self.canvas.before:
+            if color:
+                Color(color[0], color[1], color[2], color[3])
+            else:
+                Color(0, 0, 0, 1)
+            self.rect = RoundedRectangle(size=self.size, pos=self.pos)
+            self.bind(size=self._update_rect, pos=self._update_rect)
 
-        self.rowconfigure(8, minsize=100)
 
-        self.enter_department_label = Label(self)
-        self.enter_department_label['text'] = 'Enter a department to scrape'
-        self.enter_department_label.grid(row=10, column=0, columnspan=6, sticky=W)
+class TimeLabel(MyLabel):
+    def update(self, *args):
+        self.text = str(time.asctime(time.localtime(time.time())))
 
-        self.enter_department = Entry(self, textvariable=self.dept_input)
-        self.enter_department.grid(row=11, column=0, columnspan=6, sticky=E + W)
-        self.enter_department.bind('<Return>', self.scrape_department)
 
-        self.enter_department_btn = Button(self)
-        self.enter_department_btn['text'] = 'Click to webscrape department'
-        self.enter_department_btn['command'] = self.scrape_department
-        self.enter_department_btn.grid(row=12, column=0, columnspan=6, sticky=E + W)
+class MyGridLayout(GridLayout):
+    def __init__(self, **kwargs):
+        # make sure we aren't overriding any important functionality
+        super(MyGridLayout, self).__init__(**kwargs)
 
-        self.preferences = Label(self)
-        self.preferences['text'] = 'Enter your time preferences'
-        self.preferences.grid(row=10, column=10, sticky=W)
+        with self.canvas.before:
+            Color(0, 0, 0, 1)  # green; colors range from 0-1 instead of 0-255
+            self.rect = Rectangle(size=self.size, pos=self.pos)
 
-        self.preferences_entry = Entry(self, textvariable=self.preference_input)
-        self.preferences_entry.grid(row=11, column=10, sticky=W)
-        self.preferences_entry.bind('<Return>', self.add_preference)
+        self.bind(size=self._update_rect, pos=self._update_rect)
 
-        self.preferences_entry_btn = Button(self)
-        self.preferences_entry_btn['text'] = 'Click to add a time preference'
-        self.preferences_entry_btn['command'] = self.add_preference
-        self.preferences_entry_btn.grid(row=12, column=10, sticky=W)
+    def _update_rect(self, instance, value):
+        self.rect.pos = instance.pos
+        self.rect.size = instance.size
 
-    def add_class(self, event=None):
-        text = self.text_box.get().upper()
-        if len(text) <= 0:
+
+class MyButton(Button):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.background_color = (0, .5, 1, 1)
+
+
+class MainApp(App):
+    class_rows = []
+    time_prfs = []
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def build(self):
+        # initialize the root
+        self.root = root = RootLayout()
+
+        # First layer holds the title and the time
+        self.first_layer = first_layer = BoxLayout(size_hint=(1, 1))
+        title_label = MyLabel(text='UCSD Web Scraper', font_size='32sp', halign='left', size_hint=(.8, 1), valign='top')
+        title_label.y = 800
+
+        time_label = TimeLabel(font_size=14, halign='right',
+                               size_hint=(.3, 1), valign='top')
+        time_label.update()
+        time_label.opacity = 0
+
+        Animation(y=500, duration=1).start(title_label)
+        Animation(opacity=1, duration=1.5).start(time_label)
+
+        first_layer.add_widget(title_label)
+        first_layer.add_widget(time_label)
+        root.add_widget(first_layer)
+
+        # Schedule updating the time
+        Clock.schedule_interval(time_label.update, 1)
+
+        # The third layer
+        self.third_layer = third_layer = BoxLayout(size_hint=(1, 10))
+
+        # The first half of the third layer
+        third_layer_1 = BoxLayout(size_hint=(.5, 1), orientation='vertical')
+        third_layer_1.add_widget(
+            MyLabel(text='Enter your classes below.', size_hint=(1, 1), halign='left', valign='center'))
+
+        # Doing the text addition
+        text_box = BoxLayout(size_hint=(1, 1))
+        self.class_input = text_input = TextInput(multiline=False, size_hint=(.8, None), height=50)
+        self.class_input.write_tab = False
+
+        text_input.bind(on_text_validate=self.add_class_row)
+        text_box.add_widget(text_input)
+
+        # Adding the add_class_button
+        add_class_button = MyButton(text='Enter', size_hint=(.2, None), height=50)
+        add_class_button.bind(on_press=self.add_class_row)
+        text_box.add_widget(add_class_button)
+
+        third_layer_1.add_widget(text_box)
+
+        third_layer_1.add_widget(MyLabel(text='Enter your time preferences here.', valign='center'))
+
+        time_box = BoxLayout(size_hint=(1, 1))
+
+        # Doing the second time input
+        self.time_input = TextInput(hint_text='Ex: 8:00a-5:00p', size_hint=(.8, None), height=50, multiline=False)
+        self.time_input.bind(on_text_validate=self.add_time_preference)
+        self.time_input.write_tab = False
+
+        # Adding the enter preference button
+        add_preference_button = MyButton(text='Enter', size_hint=(.2, None), height=50,
+                                         on_press=self.add_time_preference)
+
+        time_box.add_widget(self.time_input)
+        time_box.add_widget(add_preference_button)
+        third_layer_1.add_widget(time_box)
+
+        temp_box = BoxLayout(size_hint=(1, 5))
+        self.time_preferences_box = StackLayout(padding=(0, 10), spacing=3, size_hint=(1, 1))
+        temp_box.add_widget(self.time_preferences_box)
+
+        third_layer_1.add_widget(temp_box)
+
+        self.results_box = BoxLayout(orientation='vertical', padding=(10, 0), size_hint=(1, 8))
+
+        # Box holding actions
+        actions_box = BoxLayout(orientation='vertical', size_hint=(1, 1.5))
+        scrape_box = BoxLayout()
+
+        # Box holding the scraper buttons
+        scrape_box.add_widget(MyButton(text='Scrape Classes', size_hint=(.5, 1), on_press=self.popup_webscrape))
+        scrape_box.add_widget(MyButton(text='Scrape Departments', size_hint=(.5, 1), on_press=self.webscrape_dept))
+
+        # Box holding parse and clean buttons
+        data_base_box = BoxLayout()
+        data_base_box.add_widget(MyButton(text='Parse', size_hint=(.5, 1), on_press=self.parse))
+        data_base_box.add_widget(MyButton(text='Clean', size_hint=(.5, 1), on_press=self.clean))
+
+        actions_box.add_widget(scrape_box)
+        actions_box.add_widget(data_base_box)
+
+        third_layer_1.add_widget(actions_box)
+
+        # The second half of the third layer
+        third_layer_2 = BoxLayout(size_hint=(.5, 1), orientation='vertical')
+        third_layer_2.add_widget(MyLabel(text='', valign='center', size_hint=(1, 1)))
+
+        # Grid with all the classes
+        self.classes_box = classes_box = StackLayout(padding=(10, 0), spacing=3, size_hint=(1, 12))
+
+        third_layer_2.add_widget(classes_box)
+
+        # Create a new grid so it will go like [     Begin] instead of [Begin      ]
+        begin_box = BoxLayout(size_hint=(1, 1), spacing=10)
+        begin_box.add_widget(Label())
+        begin_button = MyButton(text='Begin', size_hint=(1, None), height=100, on_press=self.begin)
+        begin_box.add_widget(begin_button)
+        third_layer_2.add_widget(begin_box)
+
+        third_layer.add_widget(third_layer_1)
+        third_layer.add_widget(third_layer_2)
+        root.add_widget(third_layer)
+
+        return root
+
+    def add_class_row(self, value):
+        if len(self.class_input.text) == 0:
             return
-        self.text_box.delete(0, END)
+        self.class_input.text = self.class_input.text.rstrip().strip()
 
-        new_row = ClassButtonRow(self, text)
-        self.class_rows.append(new_row)
+        self.class_rows.append(
+            ClassRow(widget=self.classes_box, color=(.97, .97, .97, 1), class_name=self.class_input.text))
+        print([row.class_name for row in self.class_rows])
+        Clock.schedule_once(self.focus_text)
+        self.class_input.text = ''
 
-        self.class_num += 1
-        self.row_class_num += 1
-        self.classes.append(text)
-        print(text)
+    def focus_text(self, value):
+        self.class_input.focus = True
 
-    def clear_classes(self):
-        for row in self.class_rows:
-            row.destroy()
-        for row in self.class_rows:
-            self.class_rows.remove(row)
-        self.class_num = 0
+    def focus_time_input(self, value):
+        self.time_input.focus = True
 
-    def run(self):
-        self.clear_results()
-        class_picker = ClassPicker()
-        best_classes = class_picker.pick(self.classes, intervals=self.time_preferences)
-        i = 5
+    def add_time_preference(self, value):
+        if len(self.time_input.text) == 0:
+            return
+        self.time_prfs.append(
+            ClassRow(parent_list=MainApp.time_prfs, widget=self.time_preferences_box,
+                     color=(.8, .8, .92, 1),
+                     class_name=self.time_input.text))
+        self.time_input.focus = True
+        Clock.schedule_once(self.focus_time_input)
+        self.time_input.text = ''
+
+    def parse(self, value):
+        parser = data_parser.Parser()
+        parser.parse()
+
+    def clean(self, value):
+        cleaner = data_cleaner.Cleaner()
+        cleaner.clean()
+
+    def format_class(self, cl):
+        ret = []
+        data = cl.data
+        if 'COURSE_NUM' in data:
+            ret.append(data['COURSE_NUM'])
+        if 'TYPE' in data:
+            ret.append(data['TYPE'])
+        if 'DAYS' in data:
+            ret.append(data['DAYS'])
+        if 'TIME' in data:
+            ret.append(data['TIME'])
+        return ' '.join(ret)
+
+    def popup_webscrape(self, value):
+        info_box = BoxLayout(orientation='vertical', size_hint=(1, 1))
+        username_box = BoxLayout(orientation='vertical', size_hint=(.5, 1))
+        password_box = BoxLayout(orientation='vertical', size_hint=(.5, 1))
+
+        username_box.add_widget(MyLabel(text='Enter your username:', size_hint=(.5, None), height=50))
+        self.username_input = TextInput(size_hint=(.5, None), height=50)
+        self.username_input.multiline = False
+        self.username_input.write_tab = False
+        username_box.add_widget(self.username_input)
+
+        password_box.add_widget(MyLabel(text='Enter your password:', size_hint=(.5, None), height=50))
+        self.password_input = TextInput(size_hint=(.5, None), height=50)
+        self.password_input.multiline = False
+        self.password_input.password = True
+        self.password_input.write_tab = False
+        password_box.add_widget(self.password_input)
+
+        info_box.add_widget(username_box)
+        info_box.add_widget(password_box)
+        info_box.add_widget(Label(size_hint=(1, 1)))
+        info_box.add_widget(MyButton(text='Login', size_hint=(.5, 1), on_press=self.webscrape))
+        info_box.add_widget(Label(size_hint=(1, 1)))
+
+        popup = Popup(title='Login', title_size='24sp', title_color=(0, 0, 0, 1), size_hint=(.8, .8), content=info_box)
+        popup.background = IMAGE_DIR + '/popup_background_logo.jpg'
+        popup.open()
+
+    def webscrape(self, value):
+        username = self.username_input.text
+        password = self.password_input.text
+        scrape = scraper.Scraper(username=username, password=password)
+        scrape.scrape()
+
+    def webscrape_dept(self, value):
+        pass
+
+    def begin(self, value):
+        self.results_box.clear_widgets()
+
+        # Creating popup and results content
+        popup = Popup(title='Results', title_size='24sp', title_color=(0, 0, 0, 1), size_hint=(.8, .8))
+        results_box = StackLayout(size_hint=(1, 1), padding=[10, 10])
+        popup.background = IMAGE_DIR + '/popup_background_logo.jpg'
+        popup.add_widget(results_box)
+
+        best_classes = []
+        # picking the class after making the widgets to allow for error handling
+        try:
+            class_picker = ClassPicker()
+            classes = [row.class_name for row in self.class_rows]
+            intervals = [TimeInterval(None, row.class_name) for row in self.time_prfs]
+            best_classes = class_picker.pick(inputs=classes, intervals=intervals)
+        except IOError as e:
+            results_box.add_widget(MyLabel(text=str(e), size_hint=(1, 1), valign='top'))
+        except RuntimeError as e:
+            results_box.add_widget(MyLabel(text=str(e), size_hint=(1, 1), valign='top'))
+        except ValueError as e:
+            results_box.add_widget(MyLabel(text=str(e), size_hint=(1, 1), valign='top'))
+
         for best_class in best_classes:
+            title = ''
+            sub_class_str = ''
+            temp_box = BoxLayout(orientation='vertical', size_hint=(.5, None))
             for sub_class in best_class.subclasses.values():
-                self.results.append(ClassRow(self, sub_class))
+                title = sub_class.data['DESCRIPTION']
+                sub_class_str += self.format_class(sub_class) + '\n'
+            temp_box.add_widget(
+                MyLabel(text=title, color=(.4, .4, .4, 1), valign='top', halign='left', size_hint=(1, .2)))
+            temp_box.add_widget(
+                MyLabel(text=sub_class_str, color=(.4, .4, .4, 1), font_size='14sp', valign='top', halign='left',
+                        size_hint=(1, .8)))
+            results_box.add_widget(temp_box)
 
-    def clear_results(self):
-        for result in self.results:
-            result.destroy()
-
-    def add_preference(self, event=None):
-        self.time_preferences.append(TimeInterval(None, self.preference_input.get()))
-        self.preferences_entry.delete(0, END)
-        [print(str(i)) for i in self.time_preferences]
-
-    def scrape_department(self, event=None):
-        web_scraper = scraper.Scraper()
-        web_scraper.login()
-        web_scraper.pick_quarter()
-        web_scraper.search_department(self.dept_input.get())
-        web_scraper.iter_pages()
+        # Making the popup
+        popup.open()
 
 
-class ClassButtonRow:
-    current_row = 2
+class ClassRow():
+    def __init__(self, parent_list=MainApp.class_rows, color=(.6, .6, .6, 1), **kwargs):
+        self.parent_list = parent_list
+        if 'class_name' in kwargs:
+            self.class_name = kwargs['class_name'].upper()
+        else:
+            self.class_name = ''
+        if 'widget' in kwargs:
+            self.layout = BoxLayout(size_hint=(1, None), height=50)
+            self.widget = kwargs['widget']
+            self.label = MyColoredLabel(text=self.class_name, halign='center', valign='center',
+                                        size_hint=(.6, None), color=color,
+                                        height=50)
+            self.button = MyButton(text='Remove', size_hint=(.4, None), height=50)
+            self.button.bind(on_press=self.destroy)
+            self.layout.add_widget(self.label)
+            self.layout.add_widget(self.button)
+            kwargs['widget'].add_widget(self.layout)
 
-    def __init__(self, Frame, text):
-        self.Frame = Frame
-        self.class_label = Label(Frame)
-        self.class_label['text'] = text
-        self.class_label.grid(row=ClassButtonRow.current_row, column=10, sticky=W)
-
-        self.rm_button = Button(Frame)
-        self.rm_button['text'] = 'Remove'
-        self.rm_button['command'] = self.destroy
-        self.rm_button.grid(row=ClassButtonRow.current_row, column=11, sticky=W)
-        ClassButtonRow.current_row += 1
-
-    def destroy(self):
-        ClassButtonRow.current_row -= 1
-        self.Frame.classes.remove(self.class_label['text'])
-        self.class_label.destroy()
-        self.rm_button.destroy()
-
-
-class ClassRow:
-    current_row = 15
-
-    def __init__(self, Frame, class_template):
-        self.data = class_template.data
-        self.current_col = 0
-
-        self.type_label = Label(Frame)
-        self.type_label['text'] = self.data['TYPE'].strip()
-        self.type_label.grid(row=ClassRow.current_row, column=self.current_col, sticky=W)
-        self.current_col += 1
-
-        self.course_num_label = Label(Frame)
-        self.course_num_label['text'] = self.data['COURSE_NUM']
-        self.course_num_label.grid(row=ClassRow.current_row, column=self.current_col, sticky=W)
-        self.current_col += 1
-
-        self.day_label = Label(Frame)
-        self.day_label['text'] = self.data['DAYS']
-        self.day_label.grid(row=ClassRow.current_row, column=self.current_col, sticky=W)
-        self.current_col += 1
-
-        self.time_label = Label(Frame)
-        self.time_label['text'] = self.data['TIME']
-        self.time_label.grid(row=ClassRow.current_row, column=self.current_col, sticky=W)
-        self.current_col += 1
-
-        ClassRow.current_row += 1
-
-    def destroy(self):
-        self.type_label.destroy()
-        self.course_num_label.destroy()
-        self.day_label.destroy()
-        self.time_label.destroy()
+    def destroy(self, value):
+        self.widget.remove_widget(self.layout)
+        self.parent_list.remove(self)
 
 
-root = Tk()
-app = Program(master=root)
-app.mainloop()
+if __name__ == '__main__':
+    MainApp().run()

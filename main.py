@@ -1,4 +1,4 @@
-from data_util import data_cleaner
+from datautil import data_cleaner
 import scraper
 
 if __name__ == '__main__':

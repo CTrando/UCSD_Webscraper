@@ -10,13 +10,18 @@ from settings import DEPARTMENTS
 
 
 class Scraper:
-    def __init__(self):
+    def __init__(self, username=None, password=None):
         os.chdir(os.path.join(HOME_DIR, "driver"))
 
         self.dir_path = None
         self.login_url = WEBREG_URL
-        self.username = input('Enter your username')
-        self.password = input('Enter your password')
+
+        if not username and not password:
+            self.username = input('Enter your username')
+            self.password = input('Enter your password')
+        else:
+            self.username = username
+            self.password = password
 
         self.browser = webdriver.Chrome()
         self.browser.set_page_load_timeout(30)
