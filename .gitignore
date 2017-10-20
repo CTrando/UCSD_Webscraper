@@ -3,6 +3,9 @@
 
 # User-specific stuff:
 ./classes
+classes
+idea
+./idea
 .idea/**/workspace.xml
 .idea/**/tasks.xml
 .idea/dictionaries
