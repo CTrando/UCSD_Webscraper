@@ -2,14 +2,14 @@ import os
 import sqlite3
 import bs4
 import time
-from settings import HTML_STORAGE
+from settings import HTML_STORAGE, DATABASE_DIR, HOME_DIR
 
 
 class Parser:
     def __init__(self):
         # initializing database
-        os.chdir('C:/Users/ctran/PycharmProjects/UCSD_Webscraper')
-        self.connection = sqlite3.connect('data/data.db')
+        os.chdir(HOME_DIR)
+        self.connection = sqlite3.connect(DATABASE_DIR)
         self.cursor = self.connection.cursor()
 
         # changing dir for HTML
@@ -83,8 +83,8 @@ class Parser:
 
     """
     Method to make final alterations to the dataset. 
-    Will put data in cleanable format; however, will not remove
-    data. 
+    Will put database in cleanable format; however, will not remove
+    database. 
     """
 
     def validate_info(self, data):

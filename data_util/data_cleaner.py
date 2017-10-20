@@ -1,6 +1,8 @@
 import sqlite3
 import time
 
+from settings import DATABASE_DIR
+
 """
 Convenience class for holding the keys to the CLASSES table representing
 the subclasses in this specific class.
@@ -93,7 +95,7 @@ class ClassHolder:
 
 class Cleaner:
     def __init__(self):
-        self.database = sqlite3.connect('data/data.db')
+        self.database = sqlite3.connect(DATABASE_DIR)
         self.cursor = self.database.cursor()
 
     def clean(self):
@@ -120,11 +122,11 @@ class Cleaner:
                                 "ORDER BY ID", course_num)
 
             """
-                The strategy here is to loop through each class data set (Every class that has the same 
+                The strategy here is to loop through each class database set (Every class that has the same 
                 course num), and then if it is a lecture, create a new row inside the database with the
                 lab, discussion, and final keys not filled up 
                 
-                As we continue to loop through the set of data, we will encounter the corresponding
+                As we continue to loop through the set of database, we will encounter the corresponding
                 extra classes (the matching discussion section and such), and we will go to our table, 
                 find all the classes with the same course num that don't have any values for the section,
                 and populate it with the correct key.
@@ -149,13 +151,13 @@ class Cleaner:
             print('*' * 10)
 
     def validate_database(self):
-        print('Begin validating data.')
+        print('Begin validating database.')
         curr_time = time.time()
         self.cursor.execute(
             'DELETE FROM DATA WHERE COURSE_NUM ISNULL OR LECTURE_KEY ISNULL AND DISCUSSION_KEY ISNULL '
             'AND SEMINAR_KEY ISNULL AND LAB_KEY ISNULL')
         fin_time = time.time()
-        print('Finished validating data in {} seconds.'.format(fin_time - curr_time))
+        print('Finished validating database in {} seconds.'.format(fin_time - curr_time))
 
     def close(self):
         self.database.commit()

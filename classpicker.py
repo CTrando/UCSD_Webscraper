@@ -1,17 +1,16 @@
 import sqlite3
 import sys
-
 import os
 
 from classutils import *
-from settings import INTERVALS
+from settings import INTERVALS, DATABASE_DIR, DEFAULT_INTERVAL, HOME_DIR
 
 
 class ClassPicker():
     def __init__(self):
         # initializing database
-        os.chdir('C:/Users/ctran/PycharmProjects/UCSD_Webscraper')
-        self.database = sqlite3.connect('data/data.db')
+        os.chdir(HOME_DIR)
+        self.database = sqlite3.connect(DATABASE_DIR)
         self.database.row_factory = sqlite3.Row
         self.cursor = self.database.cursor()
 
@@ -27,6 +26,7 @@ class ClassPicker():
             INTERVALS = intervals
 
         self.pref_classes = [i.upper().rstrip() for i in inputs]
+        self.validate_variables()
         self.validate_inputs()
         self.generate_class_set()
         self.get_candidates()
@@ -36,10 +36,15 @@ class ClassPicker():
     """
     Command line method for grabbing classes from input.
     """
+
     def get_input(self):
         my_input = input('Enter the classes that you want like so (CSE 3, CSE 8A, CSE 8B)')
         self.pref_classes = my_input.split(', ')
         self.validate_inputs()
+
+    def validate_variables(self):
+        if len(INTERVALS) == 0:
+            INTERVALS.append(DEFAULT_INTERVAL)
 
     def validate_inputs(self):
         for pref_class in self.pref_classes:

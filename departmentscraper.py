@@ -2,13 +2,17 @@ from selenium import webdriver
 import os
 import sqlite3
 
+from settings import HOME_DIR, DEPARTMENT_URL
+
 
 class DepartmentScraper:
     def __init__(self):
-        os.chdir('C:/Users/ctran/Downloads/chromedriver')
+        os.chdir(os.path.join(HOME_DIR, "driver"))
         self.browser = webdriver.Chrome()
-        os.chdir('C:/Users/ctran/PycharmProjects/UCSD_Webscraper')
-        self.database = sqlite3.connect('data/data.db')
+        os.chdir(HOME_DIR)
+
+        from settings import DATABASE_DIR
+        self.database = sqlite3.connect(DATABASE_DIR)
         self.database.row_factory = sqlite3.Row
         self.cursor = self.database.cursor()
 
@@ -23,7 +27,7 @@ class DepartmentScraper:
         self.close()
 
     def search(self):
-        self.browser.get('https://act.ucsd.edu/scheduleOfClasses/scheduleOfClassesStudent.htm')
+        self.browser.get(DEPARTMENT_URL)
 
     def get_departments(self):
         departments = self.browser.find_element_by_id('selectedSubjects').find_elements_by_tag_name('option')

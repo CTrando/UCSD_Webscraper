@@ -5,23 +5,23 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
-from settings import HTML_STORAGE
+from settings import HTML_STORAGE, HOME_DIR, WEBREG_URL
 from settings import DEPARTMENTS
 
 
 class Scraper:
     def __init__(self):
-        os.chdir('C:/Users/ctran/Downloads/chromedriver')
+        os.chdir(os.path.join(HOME_DIR, "driver"))
 
         self.dir_path = None
-        self.login_url = 'https://act.ucsd.edu/webreg2/start'
+        self.login_url = WEBREG_URL
         self.username = input('Enter your username')
         self.password = input('Enter your password')
 
         self.browser = webdriver.Chrome()
         self.browser.set_page_load_timeout(30)
 
-        os.chdir('C:/Users/ctran/PycharmProjects/UCSD_Webscraper')
+        os.chdir(HOME_DIR)
 
     def scrape(self):
         self.login()
