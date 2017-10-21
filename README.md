@@ -19,10 +19,10 @@ From there, I created a GUI which will take in a list of desired classes as well
 
 # Technologies
 This project was written exclusively in Python.
-* Selenium to navigate through WebReg and download information
-* BeautifulSoup to parse the HTML
-* Sqlite3 to interact with a SQLite database
-* Kivy to create the GUI
+* [Selenium](http://www.seleniumhq.org/) to navigate through WebReg and download information
+* [BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/) to parse the HTML
+* [Sqlite3](https://docs.python.org/2/library/sqlite3.html) to interact with a SQLite database
+* [Kivy](https://kivy.org/#home) to create the GUI
 
 
 # In Depth Process
