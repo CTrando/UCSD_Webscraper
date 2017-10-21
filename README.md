@@ -2,25 +2,21 @@
 
 This is a project that is designed to reduce some of the thinking during class enrollment with UCSD's web registration app, WebReg.
 
----
 # Demo
 
-![demo_img_1](images/demo_img_1.png)
-
-![demo_img_2](images/demo_img_2.png)
+![demo_img_1](https://raw.githubusercontent.com/CTrando/UCSD_Webscraper/master/images/demo_img_1.PNG?token=ARZ14si_r85T1ErEwUkGFv3Tnx7DMsaYks5Z9Q_UwA%3D%3D)
+![demo_img_2](https://raw.githubusercontent.com/CTrando/UCSD_Webscraper/master/images/demo_img_2.PNG?token=ARZ14i604cNYi8ylYbQS7vVTpRom0CWVks5Z9RAFwA%3D%3D)
 
 
 This should work with most regular type classes (lectures,
 discussions, seminars, finals, etc).
 
----
 
 # Process
 The idea is to use a webscraper that will login to WebReg and search through every class in every department, storing that locally.
 
 From there, I created a GUI which will take in a list of desired classes as well as a list of preferred times, and the program will try and select classes in those time periods, creating the best schedule possible from the specifications.
 
----
 # Technologies
 This project was written exclusively in Python.
 * Selenium to navigate through WebReg and download information
@@ -28,7 +24,7 @@ This project was written exclusively in Python.
 * Sqlite3 to interact with a SQLite database
 * Kivy to create the GUI
 
----
+
 # In Depth Process
 UCSD requires a login to access any data, so that is achieved through using Selenium to enter in information into the username and password field and login.
 
@@ -38,7 +34,6 @@ From there, I get user input for the list of classes, and I get all the classes 
 
 At the end, I return the best class set.
 
----
 # Instructions
 
 Clone the repository into a folder with:
@@ -74,7 +69,7 @@ If and when the webscraping finishs, you should be able to add your classes to t
 
 **I understand the webscraping is slow, I will work on a better solution.**
 
----
+
 # Contributors #
 
 If you want to contribute, I'd be glad to have the help. Right now, the current features I want to add are:
@@ -85,7 +80,7 @@ If you want to contribute, I'd be glad to have the help. Right now, the current 
 * Making the class type database dynamic
 * Improving class selection speed
 
----
+
 # Final Notes #
 
 If you made it this far, thanks for reading! Leave a star if you enjoyed!
