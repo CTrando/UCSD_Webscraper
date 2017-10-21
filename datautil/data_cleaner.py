@@ -11,6 +11,11 @@ the subclasses in this specific class.
 
 class ClassHolder:
     def __init__(self):
+        """
+        There is a class key for each type of class. That would be lectures, discussions,
+        finals, etc. At the moment, we have to add a new key if we want to make
+        adjustments to a new type.
+        """
         self.course_num = None
         self.lab_key = None
         self.lecture_key = None
@@ -25,17 +30,39 @@ class ClassHolder:
                 return col
         return None
 
+    """
+    Returns if the class is cancelled.
+    """
+
     @staticmethod
     def is_canceled(row):
         if 'cancelled' in row:
             return True
         return False
 
+    """
+    Returns if the class is a review session.
+    """
+
     @staticmethod
     def is_review_session(row):
         if 'Review Sessions' in row:
             return True
         return False
+
+    """
+    The general strategy for the following methods is to look at the table and see if there are
+    any column with the same COURSE_NUM but a null corresponding key.
+         
+    That means that for insert lecture, the code will look at the database for any rows with 
+    the same COURSE_NUM but no lecture key. 
+    
+    Because of how the data is funneled in, there should be no cases where a lecture key corresponds
+    to the right class but the wrong class section (Could still happen).
+    
+    If there is no corresponding COURSE_NUM row, then it will create a row.
+    The only exception is the final, where an extra final is not enough to make a class by itself. 
+    """
 
     @classmethod
     def insert_lecture(self, cursor, course_num, lecture_key):
@@ -81,8 +108,13 @@ class ClassHolder:
             cursor.execute('INSERT INTO DATA VALUES(?,?,?,?,?,?,?)',
                            (None, course_num, None, None, None, seminar_key, None))
 
+    """
+    Important! This method is slightly different
+    """
+
     @staticmethod
     def insert_final(cursor, course_num, final_key):
+        # Difference is in the line below with not testing if the FINAL_KEY is null
         cursor.execute('SELECT COUNT(1) FROM DATA WHERE COURSE_NUM = ?', (course_num,))
         num = cursor.fetchone()
         if num[0] > 0:
@@ -93,18 +125,31 @@ class ClassHolder:
                            (None, course_num, None, None, None, None, final_key))
 
 
+"""
+Will go through every row of the CLASSES table and sort them correctly into the
+DATA table
+"""
+
+
 class Cleaner:
     def __init__(self):
         self.database = sqlite3.connect(DATABASE_PATH)
         self.cursor = self.database.cursor()
 
     def clean(self):
-        self.begin()
+        print('Begin cleaning database.')
+        curr_time = time.time()
+        self.setup_database()
         self.create_links()
         self.validate_database()
         self.close()
+        fin_time = time.time()
+        print('Finished cleaning database in {} seconds'.format(fin_time-curr_time))
 
-    def begin(self):
+    """
+    Setup database
+    """
+    def setup_database(self):
         self.cursor.execute('DROP TABLE IF EXISTS DATA')
         self.cursor.execute(
             'CREATE TABLE IF NOT EXISTS DATA '
@@ -136,6 +181,8 @@ class Cleaner:
 
             for class_info in self.cursor.fetchall():
                 print(str(course_num + class_info))
+                # Make sure class is usable
+                # TODO Make the below part dynamic
                 if ClassHolder.is_canceled(class_info) or ClassHolder.is_review_session(class_info):
                     continue
                 if ClassHolder.get_type(class_info) == 'LE':
@@ -150,6 +197,9 @@ class Cleaner:
                     ClassHolder.insert_seminar(self.cursor, course_num[0], class_info[0])
             print('*' * 10)
 
+    """
+    Make sure that there are no rows where every class (not including final) is null.
+    """
     def validate_database(self):
         print('Begin validating database.')
         curr_time = time.time()

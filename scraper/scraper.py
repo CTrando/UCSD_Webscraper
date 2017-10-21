@@ -5,26 +5,32 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
-from settings import HTML_STORAGE, HOME_DIR, WEBREG_URL
-from settings import DEPARTMENTS
+from settings import HTML_STORAGE, HOME_DIR, WEBREG_URL, MANUAL_MODE, TIMEOUT, DEPARTMENTS, CLASS_SEARCH_TIMEOUT
 
 
 class Scraper:
     def __init__(self, username=None, password=None):
+        # Go to web browser directory
         os.chdir(os.path.join(HOME_DIR, "driver"))
 
+        # Keeping track of HTML directory
         self.dir_path = None
         self.login_url = WEBREG_URL
 
+        # Take input manually if does not come from the GUI
         if not username and not password:
-            self.username = input('Enter your username')
-            self.password = input('Enter your password')
+            # Check if can enter information manually
+            if MANUAL_MODE:
+                self.username = input('Enter your username')
+                self.password = input('Enter your password')
+            else:
+                raise IOError("You must put in a username and password!")
         else:
             self.username = username
             self.password = password
 
         self.browser = webdriver.Chrome()
-        self.browser.set_page_load_timeout(30)
+        self.browser.set_page_load_timeout(TIMEOUT)
 
         os.chdir(HOME_DIR)
 
@@ -44,7 +50,7 @@ class Scraper:
 
     def pick_quarter(self):
         try:
-            submit = WebDriverWait(self.browser, 200).until(EC.presence_of_element_located(
+            submit = WebDriverWait(self.browser, TIMEOUT).until(EC.presence_of_element_located(
                 (By.ID, 'startpage-button-go')
             ))
             while self.browser.find_element_by_id('startpage-button-go'):
@@ -62,8 +68,8 @@ class Scraper:
     def search_department(self, department):
         self.dir_path = os.path.join(HTML_STORAGE, department)
         try:
-            class_search = WebDriverWait(self.browser, 200).until(EC.presence_of_element_located
-                                                                  ((By.ID, 's2id_autogen1')))
+            class_search = WebDriverWait(self.browser, TIMEOUT).until(EC.presence_of_element_located
+                                                                      ((By.ID, 's2id_autogen1')))
             class_search.click()
             class_search.send_keys(department)
             class_search.send_keys(Keys.RETURN)
@@ -74,8 +80,8 @@ class Scraper:
 
     def iter_pages(self):
         # now I should be at the course pages
-        page_ul = WebDriverWait(self.browser, 200).until(EC.presence_of_element_located
-                                                         ((By.CLASS_NAME, 'jPag-pages')))
+        page_ul = WebDriverWait(self.browser, TIMEOUT).until(EC.presence_of_element_located
+                                                             ((By.CLASS_NAME, 'jPag-pages')))
         pages = page_ul.find_elements_by_tag_name('li')
         for page in pages:
             current = self.browser.find_element_by_class_name('jPag-current').text
@@ -86,8 +92,11 @@ class Scraper:
                 print("Have clicked page", page.text)
             try:
                 while True:
-                    class_search = WebDriverWait(self.browser, 10).until(EC.presence_of_element_located
-                                                                         ((By.CLASS_NAME, 'ui-icon-circlesmall-plus')))
+                    class_search = WebDriverWait(self.browser, CLASS_SEARCH_TIMEOUT).until(
+                        EC.presence_of_element_located(
+                            (By.CLASS_NAME, 'ui-icon-circlesmall-plus')
+                        )
+                    )
                     class_search.click()
             except Exception:
                 print('I should be moving to the next page now.')

@@ -3,6 +3,14 @@ import sqlite3
 
 from timeutil.timeutils import TimeInterval
 
+"""
+This class is a storage area for various variables and settings.
+"""
+
+"""
+DIRECTORIES
+"""
+
 # Where the directory is placed
 HOME_DIR = os.getcwd()
 # Database directory
@@ -10,10 +18,23 @@ DATABASE_PATH = 'database/data.db'
 # Image directory
 IMAGE_DIR = 'images'
 
+"""
+MODES
+"""
+
+# Manual mode for logging in
+MANUAL_MODE = False
+
+"""
+URLS 
+"""
 # URLs
 DEPARTMENT_URL = 'https://act.ucsd.edu/scheduleOfClasses/scheduleOfClassesStudent.htm'
 WEBREG_URL = 'https://act.ucsd.edu/webreg2/start'
 
+"""
+DEPARTMENT DATA INFORMATION
+"""
 # Is list of current departments
 DEPARTMENTS = []
 
@@ -40,8 +61,20 @@ for code in depts:
 # Where the classes are stored
 HTML_STORAGE = 'classes'
 
+"""
+PREFERENCE DATA
+"""
 # Intervals
 INTERVALS = []
 
 # Default interval
 DEFAULT_INTERVAL = TimeInterval(None, '8:00a-12:00p')
+
+"""
+VARIABLES
+"""
+# Time for timeout for browser
+TIMEOUT = 30
+
+# Time before class timeout
+CLASS_SEARCH_TIMEOUT = 10
