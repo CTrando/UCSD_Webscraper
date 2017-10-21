@@ -59,7 +59,7 @@ Now go into `scraper.py` in the `scraper` directory and change the `Chrome` cons
 
 Click on the webscrape data and enter in your username and password for WebReg.
 
-###Do so at your own risk! I cannot guarantee the safety of your information.###
+### Do so at your own risk! I cannot guarantee the safety of your information.
 
 After that, the application should begin webscraping WebReg. It will take a while to get every department, however it can be started and stopped at any time.
 
