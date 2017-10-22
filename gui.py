@@ -1,3 +1,4 @@
+import random
 import time
 
 from kivy import Config
@@ -9,6 +10,7 @@ from kivy.graphics.vertex_instructions import RoundedRectangle
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
+from kivy.uix.image import Image
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.uix.stacklayout import StackLayout
@@ -31,14 +33,24 @@ class RootLayout(BoxLayout):
         self.padding = (50, 50)
         with self.canvas.before:
             Color(.95, .95, .95, 1)
-            self.rect = Rectangle(size=self.size, pos=self.pos)
-            self.rect.source = IMAGE_DIR + '/background_logo.jpg'
+            self.texture = Image(source=IMAGE_DIR + '/background_logo.jpg').texture
+            self.width = self.texture.width
+            self.height = self.texture.height
+
+            self.bound_box = Rectangle(size=self.size, pos=self.pos)
+            self.image_box = Rectangle(size=self.size, pos=self.pos, texture=self.texture)
+
+            # self.rect.tex_coords = [random.randint(0,1) for i in range(0, 8)]
         self.bind(size=self._update_rect, pos=self._update_rect)
 
     def _update_rect(self, instance, value):
-        self.rect.pos = instance.pos
-        self.rect.size = instance.size
-        print(self.rect.size)
+        self.bound_box.pos = instance.pos
+        self.bound_box.size = instance.size
+
+        middle = [instance.size[0]/2, instance.size[1]/2]
+        mid_tex = [self.texture.width/2, self.texture.height/2]
+
+        self.image_box.pos = [middle[i] - mid_tex[i] for i in range(0,2)]
 
 
 class MyLabel(Label):
