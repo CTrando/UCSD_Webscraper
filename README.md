@@ -40,6 +40,13 @@ Clone the repository into a folder with:
 
 `git clone https://github.com/CTrando/UCSD_Webscraper.git`
 
+Navigate to that folder.
+
+To run the program, run:
+`python gui.py` in the terminal or some equivalent IDE.
+
+That is where the GUI code is held which references the other part of the program. A GUI should appear, however you will be unable to generate classes until you scrape the classes yourself.
+
 To keep the size of the install small and protect private information as well as for possible legal concerns, you will have to download and webscrape the classes yourself.
 
 At the moment, **webscraping will only work with Google Chrome**. If you want to use a different browser, you must look up the corresponding Selenium webdriver application and edit the `scraper.py` file.
