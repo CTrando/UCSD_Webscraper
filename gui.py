@@ -1,5 +1,7 @@
 import random
 import time
+from matplotlib import dates
+from matplotlib import pyplot
 
 from kivy import Config
 from kivy.animation import Animation
@@ -355,6 +357,8 @@ class MainApp(App):
         except ValueError as e:
             results_box.add_widget(MyLabel(text=str(e), size_hint=(1, 1), valign='top'))
 
+        times = []
+
         for best_class in best_classes:
             title = ''
             sub_class_str = ''
@@ -362,6 +366,8 @@ class MainApp(App):
             for sub_class in best_class.subclasses.values():
                 title = sub_class.data['DESCRIPTION']
                 sub_class_str += self.format_class(sub_class) + '\n'
+                times.append(sub_class.interval.times)
+
             temp_box.add_widget(
                 MyLabel(text=title, color=(.4, .4, .4, 1), valign='top', halign='left', size_hint=(1, .2)))
             temp_box.add_widget(
@@ -369,8 +375,15 @@ class MainApp(App):
                         size_hint=(1, .8)))
             results_box.add_widget(temp_box)
 
+
         # Making the popup
         popup.open()
+        # days = []
+        # for date in times:
+        #     days = days + list(dates.date2num(date))
+        # pyplot.plot_date(days, days)
+
+
 
 
 class ClassRow():
