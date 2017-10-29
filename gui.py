@@ -21,6 +21,7 @@ from kivy.uix.textinput import TextInput
 from classpicker import ClassPicker
 from datautil import data_cleaner, data_parser
 from settings import IMAGE_DIR
+from test import MyGraph
 from timeutil.timeutils import TimeInterval
 from scraper import scraper
 
@@ -334,6 +335,22 @@ class MainApp(App):
     def webscrape_dept(self, value):
         pass
 
+    def graph(self, time_intervals):
+        graph = MyGraph()
+        for time_interval in time_intervals:
+            times = time_interval.times
+            days = time_interval.days
+            if len(times) != 2:
+                continue
+            startTime = times[0].hour + times[0].minute/60
+            endTime = times[1].hour + times[1].minute/60
+
+            for day in days:
+                graph.add_time(day=day, time=[startTime, endTime])
+
+        graph.show()
+
+
     def begin(self, value):
         self.results_box.clear_widgets()
 
@@ -359,6 +376,7 @@ class MainApp(App):
 
         times = []
 
+
         for best_class in best_classes:
             title = ''
             sub_class_str = ''
@@ -366,7 +384,7 @@ class MainApp(App):
             for sub_class in best_class.subclasses.values():
                 title = sub_class.data['DESCRIPTION']
                 sub_class_str += self.format_class(sub_class) + '\n'
-                times.append(sub_class.interval.times)
+                times.append(sub_class.interval)
 
             temp_box.add_widget(
                 MyLabel(text=title, color=(.4, .4, .4, 1), valign='top', halign='left', size_hint=(1, .2)))
@@ -375,6 +393,7 @@ class MainApp(App):
                         size_hint=(1, .8)))
             results_box.add_widget(temp_box)
 
+        self.graph(times)
 
         # Making the popup
         popup.open()
