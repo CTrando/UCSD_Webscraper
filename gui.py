@@ -338,9 +338,9 @@ class MainApp(App):
     def graph_schedule(self, schedule):
         graph = MyGraph()
         for cl in schedule:
-            color = (random.randint(0, 200) / 200,
-                     random.randint(0, 200) / 200,
-                     random.randint(0, 200) / 200)
+            color = (random.randint(150, 200) / 200,
+                     random.randint(150, 200) / 200,
+                     random.randint(150, 200) / 200)
             for subclass in cl.subclasses.values():
                 times = subclass.interval.times
                 days = subclass.interval.days
