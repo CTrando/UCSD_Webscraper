@@ -10,9 +10,7 @@ days = {'M': 0,
         'Tu': 1,
         'W': 2,
         'Th': 3,
-        'F': 4
-        }
-
+        'F': 4}
 day_list = ['M', 'Tu', 'W', 'Th', 'F']
 x_ticks = [.5, 1.5, 2.5, 3.5, 4.5]
 
@@ -40,12 +38,6 @@ class MyGraph:
         self.ax.xaxis.set_minor_formatter(ticker.FixedFormatter(day_list))
         self.ax.yaxis.set_major_formatter(ticker.FuncFormatter(self.time_format))
 
-        # self.add_time(2, (8, 10))
-        # self.add_time(2, (13, 14))
-        #
-        # self.add_time(1, (7, 14))
-        # self.add_time(0, (7, 10))
-
     @staticmethod
     def time_format(x, y):
         modifier = 'am'
@@ -60,24 +52,25 @@ class MyGraph:
             minute += '0'
         return hour + ':' + minute + modifier
 
-    def add_time(self, day, time):
+    def add_class_time(self, day, time, text=None, color=None):
+        if not color:
+            color = (random.randint(0, 200) / 200,
+                     random.randint(0, 200) / 200,
+                     random.randint(0, 200) / 200)
+
         day = days[day]
         dy = time[1] - time[0]
         y = time[0]
         self.ax.add_patch(
             patches.Rectangle(
-                (day, y),
-                1,
-                dy,
-                color=(random.randint(0, 200) / 200,
-                       random.randint(0, 200) / 200,
-                       random.randint(0, 200) / 200)
+                xy=(day, y),
+                width=1,
+                height=dy,
+                color=color
             )
         )
+        self.ax.text(day, y, text)
 
-    def show(self):
+    @staticmethod
+    def show():
         plt.show()
-
-#
-# graph = MyGraph()
-# graph.show()

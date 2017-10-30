@@ -50,10 +50,10 @@ class RootLayout(BoxLayout):
         self.bound_box.pos = instance.pos
         self.bound_box.size = instance.size
 
-        middle = [instance.size[0]/2, instance.size[1]/2]
-        mid_tex = [self.texture.width/2, self.texture.height/2]
+        middle = [instance.size[0] / 2, instance.size[1] / 2]
+        mid_tex = [self.texture.width / 2, self.texture.height / 2]
 
-        self.image_box.pos = [middle[i] - mid_tex[i] for i in range(0,2)]
+        self.image_box.pos = [middle[i] - mid_tex[i] for i in range(0, 2)]
 
 
 class MyLabel(Label):
@@ -335,21 +335,23 @@ class MainApp(App):
     def webscrape_dept(self, value):
         pass
 
-    def graph(self, time_intervals):
+    def graph_schedule(self, schedule):
         graph = MyGraph()
-        for time_interval in time_intervals:
-            times = time_interval.times
-            days = time_interval.days
-            if len(times) != 2:
-                continue
-            startTime = times[0].hour + times[0].minute/60
-            endTime = times[1].hour + times[1].minute/60
+        for cl in schedule:
+            color = (random.randint(0, 200) / 200,
+                     random.randint(0, 200) / 200,
+                     random.randint(0, 200) / 200)
+            for subclass in cl.subclasses.values():
+                times = subclass.interval.times
+                days = subclass.interval.days
+                if len(times) != 2:
+                    continue
+                startTime = times[0].hour + times[0].minute / 60
+                endTime = times[1].hour + times[1].minute / 60
 
-            for day in days:
-                graph.add_time(day=day, time=[startTime, endTime])
-
+                for day in days:
+                    graph.add_class_time(day=day, time=[startTime, endTime], color=color, text=cl.data['COURSE_NUM'])
         graph.show()
-
 
     def begin(self, value):
         self.results_box.clear_widgets()
@@ -360,13 +362,13 @@ class MainApp(App):
         popup.background = IMAGE_DIR + '/popup_background_logo.jpg'
         popup.add_widget(results_box)
 
-        best_classes = []
+        self.best_classes = best_classes = []
         # picking the class after making the widgets to allow for error handling
         try:
             class_picker = ClassPicker()
             classes = [row.class_name for row in self.class_rows]
             intervals = [TimeInterval(None, row.class_name) for row in self.time_prfs]
-            best_classes = class_picker.pick(inputs=classes, intervals=intervals)
+            self.best_classes = best_classes = class_picker.pick(inputs=classes, intervals=intervals)
         except IOError as e:
             results_box.add_widget(MyLabel(text=str(e), size_hint=(1, 1), valign='top'))
         except RuntimeError as e:
@@ -374,17 +376,14 @@ class MainApp(App):
         except ValueError as e:
             results_box.add_widget(MyLabel(text=str(e), size_hint=(1, 1), valign='top'))
 
-        times = []
-
-
         for best_class in best_classes:
             title = ''
             sub_class_str = ''
             temp_box = BoxLayout(orientation='vertical', size_hint=(.5, None))
+
             for sub_class in best_class.subclasses.values():
                 title = sub_class.data['DESCRIPTION']
                 sub_class_str += self.format_class(sub_class) + '\n'
-                times.append(sub_class.interval)
 
             temp_box.add_widget(
                 MyLabel(text=title, color=(.4, .4, .4, 1), valign='top', halign='left', size_hint=(1, .2)))
@@ -393,16 +392,12 @@ class MainApp(App):
                         size_hint=(1, .8)))
             results_box.add_widget(temp_box)
 
-        self.graph(times)
-
+        results_box.add_widget(MyButton(text='Click to see a visual', valign='bottom', size_hint=(1, .2), on_press=self.show_schedule))
         # Making the popup
         popup.open()
-        # days = []
-        # for date in times:
-        #     days = days + list(dates.date2num(date))
-        # pyplot.plot_date(days, days)
 
-
+    def show_schedule(self, value):
+        self.graph_schedule(self.best_classes)
 
 
 class ClassRow():
