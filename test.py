@@ -26,24 +26,23 @@ class MyGraph:
         plt.grid()
         plt.ylabel('Times')
         plt.xlabel('Days')
-        plt.xlim([0, 5])
-
-        plt.ylim([6, 19])
 
         self.ax.yaxis.set_major_locator(loc)
 
         self.ax.xaxis.set_major_formatter(ticker.NullFormatter())
         self.ax.xaxis.set_minor_locator(ticker.FixedLocator(x_ticks))
+        self.ax.set_xlim(xmin=0, xmax=5)
 
         self.ax.xaxis.set_minor_formatter(ticker.FixedFormatter(day_list))
         self.ax.yaxis.set_major_formatter(ticker.FuncFormatter(self.time_format))
+        self.ax.set_ylim(ymin=0, ymax=24)
 
     @staticmethod
     def time_format(x, y):
         modifier = 'am'
         time = x * 60
         hour = str(int(time // 60) % 12)
-        if x // 12 > 0:
+        if x // 12 > 0 and x//12 % 2 == 1:
             modifier = 'pm'
         if hour == '0':
             hour = '12'
@@ -70,6 +69,9 @@ class MyGraph:
             )
         )
         self.ax.text(day, y, text)
+
+        self.ax.relim()
+        self.ax.autoscale()
 
     @staticmethod
     def show():
