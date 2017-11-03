@@ -78,3 +78,8 @@ TIMEOUT = 30
 
 # Time before class timeout
 CLASS_SEARCH_TIMEOUT = 10
+
+# Interval for days on graph
+DAY_GRAPH_INTERVAL = .5
+
+POPUP_TEXT_COLOR = (.4, .4, .4, 1)

@@ -1,7 +1,5 @@
 import random
 import time
-from matplotlib import dates
-from matplotlib import pyplot
 
 from kivy import Config
 from kivy.animation import Animation
@@ -18,12 +16,14 @@ from kivy.uix.popup import Popup
 from kivy.uix.stacklayout import StackLayout
 from kivy.uix.textinput import TextInput
 
+from ScheduleGraph import MyGraph
 from classpicker import ClassPicker
 from datautil import data_cleaner, data_parser
-from settings import IMAGE_DIR
-from test import MyGraph
-from timeutil.timeutils import TimeInterval
 from scraper import scraper
+from settings import IMAGE_DIR, POPUP_TEXT_COLOR
+from timeutil.timeutils import TimeInterval
+
+import threading
 
 Config.set('graphics', 'font-name', 'Times')
 Config.set('input', 'mouse', 'mouse, multitouch_on_demand')
@@ -43,7 +43,6 @@ class RootLayout(BoxLayout):
             self.bound_box = Rectangle(size=self.size, pos=self.pos)
             self.image_box = Rectangle(size=self.size, pos=self.pos, texture=self.texture)
 
-            # self.rect.tex_coords = [random.randint(0,1) for i in range(0, 8)]
         self.bind(size=self._update_rect, pos=self._update_rect)
 
     def _update_rect(self, instance, value):
@@ -104,7 +103,7 @@ class MyColoredLabel(MyLabel):
 
 
 class TimeLabel(MyLabel):
-    def update(self, *args):
+    def update(self):
         self.text = str(time.asctime(time.localtime(time.time())))
 
 
@@ -362,39 +361,61 @@ class MainApp(App):
         popup.background = IMAGE_DIR + '/popup_background_logo.jpg'
         popup.add_widget(results_box)
 
-        self.best_classes = best_classes = []
+        self.best_classes = []
+
+        # Using multi-threading to make UI responsive while loading
+        # Thread will end upon finish, and will update best classes and the results box
+        class_picker_thread = threading.Thread(target=self.pick_classes, args=(self, results_box, popup))
+        class_picker_thread.start()
+        popup.open()
+
+    @staticmethod
+    def pick_classes(val, results_box, popup):
+        """
+        Will pick classes through multi-threading and will add the class rows to the popup.
+        Will open the popup once the thread has completed its actions.
+        :param val: Passes in the MainApp instance
+        :param results_box: Where the class results are placed
+        :param popup: The popup that will be shown
+        """
+
         # picking the class after making the widgets to allow for error handling
         try:
             class_picker = ClassPicker()
-            classes = [row.class_name for row in self.class_rows]
-            intervals = [TimeInterval(None, row.class_name) for row in self.time_prfs]
-            self.best_classes = best_classes = class_picker.pick(inputs=classes, intervals=intervals)
-        except IOError as e:
-            results_box.add_widget(MyLabel(text=str(e), size_hint=(1, 1), valign='top'))
-        except RuntimeError as e:
-            results_box.add_widget(MyLabel(text=str(e), size_hint=(1, 1), valign='top'))
-        except ValueError as e:
+            classes = [row.class_name for row in val.class_rows]
+            intervals = [TimeInterval(None, row.class_name) for row in val.time_prfs]
+            val.best_classes = class_picker.pick(inputs=classes, intervals=intervals)
+        except Exception as e:
             results_box.add_widget(MyLabel(text=str(e), size_hint=(1, 1), valign='top'))
 
-        for best_class in best_classes:
-            title = ''
+        for best_class in val.best_classes:
+            # Init the variables
+            class_desc = ''
             sub_class_str = ''
+
+            # A temp container for the class description and sub class
             temp_box = BoxLayout(orientation='vertical', size_hint=(.5, None))
 
             for sub_class in best_class.subclasses.values():
-                title = sub_class.data['DESCRIPTION']
-                sub_class_str += self.format_class(sub_class) + '\n'
+                class_desc = sub_class.data['DESCRIPTION']
+                sub_class_str += val.format_class(sub_class) + '\n'
 
             temp_box.add_widget(
-                MyLabel(text=title, color=(.4, .4, .4, 1), valign='top', halign='left', size_hint=(1, .2)))
+            # Putting the class description as the first label
+                MyLabel(text=class_desc, color=POPUP_TEXT_COLOR, valign='top', halign='left', size_hint=(1, .2)))
+            # Then the actual class data itself
             temp_box.add_widget(
-                MyLabel(text=sub_class_str, color=(.4, .4, .4, 1), font_size='14sp', valign='top', halign='left',
+                MyLabel(text=sub_class_str, color=POPUP_TEXT_COLOR, font_size='14sp', valign='top', halign='left',
                         size_hint=(1, .8)))
+            # Add the container to the results box
             results_box.add_widget(temp_box)
 
-        results_box.add_widget(MyButton(text='Click to see a visual', valign='bottom', size_hint=(1, .2), on_press=self.show_schedule))
-        # Making the popup
-        popup.open()
+        # If best classes actually has classes
+        if val.best_classes:
+            results_box.add_widget(
+                MyButton(text='Click to see a visual', valign='bottom', size_hint=(1, .2), on_press=val.show_schedule))
+
+        # Open the popup at the end
 
     def show_schedule(self, value):
         self.graph_schedule(self.best_classes)
