@@ -343,15 +343,23 @@ class MainApp(App):
                      random.randint(150, 200) / 200,
                      random.randint(150, 200) / 200)
             for subclass in cl.subclasses.values():
-                times = subclass.interval.times
-                days = subclass.interval.days
-                if len(times) != 2:
+                # Using the pair in order to hit the PHYS classes with weird stuff
+                day_time_pairs = subclass.interval.day_time_pairs
+                # Make sure there are pairs
+                if not day_time_pairs:
                     continue
-                startTime = times[0].hour + times[0].minute / 60
-                endTime = times[1].hour + times[1].minute / 60
 
-                for day in days:
+                # Add the graph if the class and day exists
+                for entry in day_time_pairs:
+                    day = entry[0]
+                    times = entry[1]
+
+                    if len(times) != 2:
+                        continue
+                    startTime = times[0].hour + times[0].minute / 60
+                    endTime = times[1].hour + times[1].minute / 60
                     graph.add_class_time(day=day, time=[startTime, endTime], color=color, text=cl.data['COURSE_NUM'])
+
         graph.show()
 
     def begin(self, value):
