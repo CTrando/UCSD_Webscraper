@@ -60,9 +60,11 @@ class Scraper:
             pass
 
     def iter_departments(self):
-        for department in DEPARTMENTS:
+        dept_list = DEPARTMENTS
+        dept_list = dept_list[130:]
+        for department in dept_list:
             self.search_department(department)
-            self.iter_pages()
+            self.iter_pages(department)
             print('I should be moving to the next department now.')
 
     def search_department(self, department):
@@ -78,10 +80,14 @@ class Scraper:
             print(e)
             pass
 
-    def iter_pages(self):
+    def iter_pages(self, department):
         # now I should be at the course pages
-        page_ul = WebDriverWait(self.browser, TIMEOUT).until(EC.presence_of_element_located
+        try:
+            page_ul = WebDriverWait(self.browser, TIMEOUT).until(EC.presence_of_element_located
                                                              ((By.CLASS_NAME, 'jPag-pages')))
+        except Exception:
+            print('No classes found with this dept code')
+            return
         pages = page_ul.find_elements_by_tag_name('li')
         for page in pages:
             current = self.browser.find_element_by_class_name('jPag-current').text
@@ -101,6 +107,8 @@ class Scraper:
             except Exception:
                 print('I should be moving to the next page now.')
                 html = self.browser.page_source
+                if ' ' + department + ' ' not in html:
+                    break
                 self.store_page(html, page.text)
                 pass
 

@@ -4,6 +4,7 @@
 # User-specific stuff:
 ./classes
 classes
+class_versions
 .idea
 __pycache__
 ./idea

@@ -20,6 +20,7 @@ from ScheduleGraph import MyGraph
 from classpicker import ClassPicker
 from datautil import data_cleaner, data_parser
 from scraper import scraper
+from scraper.departmentscraper import DepartmentScraper
 from settings import IMAGE_DIR, POPUP_TEXT_COLOR
 from timeutil.timeutils import TimeInterval
 
@@ -103,7 +104,7 @@ class MyColoredLabel(MyLabel):
 
 
 class TimeLabel(MyLabel):
-    def update(self):
+    def update(self, *args):
         self.text = str(time.asctime(time.localtime(time.time())))
 
 
@@ -332,7 +333,8 @@ class MainApp(App):
         scrape.scrape()
 
     def webscrape_dept(self, value):
-        pass
+        dept_scraper = DepartmentScraper()
+        dept_scraper.scrape()
 
     def graph_schedule(self, schedule):
         graph = MyGraph()

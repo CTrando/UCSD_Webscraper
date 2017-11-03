@@ -41,8 +41,13 @@ DEPARTMENTS = []
 # Connect to the department database and see if it has names
 database = sqlite3.connect(DATABASE_PATH)
 cursor = database.cursor()
-cursor.execute('SELECT DEPT_CODE FROM DEPARTMENT')
-depts = cursor.fetchall()
+depts = []
+
+try:
+    cursor.execute('SELECT DEPT_CODE FROM DEPARTMENT')
+    depts = cursor.fetchall()
+except Exception:
+    pass
 
 # If no departments in database, then scrape
 if len(depts) <= 0:
@@ -77,7 +82,7 @@ VARIABLES
 TIMEOUT = 30
 
 # Time before class timeout
-CLASS_SEARCH_TIMEOUT = 10
+CLASS_SEARCH_TIMEOUT = 5
 
 # Interval for days on graph
 DAY_GRAPH_INTERVAL = .5
