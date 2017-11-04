@@ -390,13 +390,13 @@ class MainApp(App):
         """
 
         # picking the class after making the widgets to allow for error handling
-        try:
-            class_picker = ClassPicker()
-            classes = [row.class_name for row in val.class_rows]
-            intervals = [TimeInterval(None, row.class_name) for row in val.time_prfs]
-            val.best_classes = class_picker.pick(inputs=classes, intervals=intervals)
-        except Exception as e:
-            results_box.add_widget(MyLabel(text=str(e), size_hint=(1, 1), valign='top'))
+        #try:
+        class_picker = ClassPicker()
+        classes = [row.class_name for row in val.class_rows]
+        intervals = [TimeInterval(None, row.class_name) for row in val.time_prfs]
+        val.best_classes = class_picker.pick(inputs=classes, intervals=intervals)
+        #except Exception as e:
+         #   results_box.add_widget(MyLabel(text=str(e), size_hint=(1, 1), valign='top'))
 
         for best_class in val.best_classes:
             # Init the variables

@@ -156,7 +156,7 @@ class ClassPicker():
                 if cl.inside_time(interval):
                     temp_score += 1 / cl.distance_from_interval(interval)
                 # If it does overlaps in the interval punish the set
-                if not cl.overlaps_time(interval):
+                elif not cl.overlaps_time(interval):
                     temp_score -= .1 * cl.distance_from_interval(interval)
             score = max(temp_score, score)
 

@@ -53,7 +53,7 @@ class TimeInterval:
         time_len = len(times)
         # If one is empty just return
         if day_len == 0 or time_len == 0:
-            return
+            return []
         if day_len == time_len:
             # Split them up if they are equal
             for i in range(0, day_len):
@@ -84,7 +84,7 @@ class TimeInterval:
     def get_days(day_list):
         day_list = day_list.replace(' ', '')
         unsorted_days = []
-        ret_days = [None]*len(day_list)
+        ret_days = [None] * len(day_list)
 
         for day in PRESET_DAYS:
             if day in day_list:
@@ -93,7 +93,7 @@ class TimeInterval:
         for i in range(0, len(unsorted_days)):
             index = day_list.index(unsorted_days[i])
             if ret_days[index]:
-                index = day_list.index(unsorted_days[i], index+1)
+                index = day_list.index(unsorted_days[i], index + 1)
             ret_days[index] = unsorted_days[i]
         ret_days = [x for x in ret_days if x is not None]
         return ret_days
@@ -133,38 +133,46 @@ class TimeInterval:
     """
 
     def overlaps_times_and_days(self, other):
-        for day in self.days:
-            if day in other.days:
-                if self.overlaps_time(other):
-                    return True
+        for day_time_pair in self.day_time_pairs:
+            for other_day_time_pair in other.day_time_pairs:
+                if day_time_pair[0] == other_day_time_pair[0]:
+                    if TimeInterval.overlaps_time_intervals(day_time_pair[1], other_day_time_pair[1]):
+                        return True
+        return False
+
+    @staticmethod
+    def overlaps_time_intervals(self_time, other_time):
+        try:
+            my_start = self_time[0]
+            my_end = self_time[1]
+
+            other_start = other_time[0]
+            other_end = other_time[1]
+        except IndexError as e:
+            return False
+        if (other_start <= my_start and my_start <= other_end) or (
+                        my_start <= other_start and other_start <= my_end):
+            return True
         return False
 
     """
     Check if two time intervals overlap each other.
     """
-
+    @staticmethod
     def overlaps_time(self, other):
-        try:
-            my_start = self.times[0]
-            my_end = self.times[1]
-
-            other_start = other.times[0]
-            other_end = other.times[1]
-        except IndexError as e:
-            return False
-        return (other_start <= my_start <= other_end) or (my_start <= other_start <= my_end)
+        return TimeInterval.overlaps_time_intervals(self, other)
 
     """
     Check if a time interval is inside of another.
     """
-
+    @staticmethod
     def inside_time(self, other):
         try:
-            my_start = self.times[0]
-            my_end = self.times[1]
+            my_start = self[0]
+            my_end = self[1]
 
-            other_start = other.times[0]
-            other_end = other.times[1]
+            other_start = other[0]
+            other_end = other[1]
         except IndexError as e:
             return True
         return (other_start <= my_start <= other_end) and (other_start <= my_end <= other_end) or \
@@ -175,12 +183,13 @@ class TimeInterval:
     This method is probably wrong.
     """
 
+    @staticmethod
     def distance_from(self, other):
-        my_start = self.times[0]
-        my_end = self.times[1]
+        my_start = self[0]
+        my_end = self[1]
 
-        other_start = other.times[0]
-        other_end = other.times[1]
+        other_start = other[0]
+        other_end = other[1]
 
         one = abs((my_start - other_end)).total_seconds() / 3600
         two = abs((my_end - other_start).total_seconds() / 3600)

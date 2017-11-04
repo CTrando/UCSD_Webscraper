@@ -48,13 +48,25 @@ class ClassTemplate:
         return self.interval.overlaps_times_and_days(other.interval)
 
     def inside_time(self, other):
-        return self.interval.inside_time(other)
+        for self_time in self.interval.times:
+            for other_time in other.times:
+                if not self.interval.inside_time(self_time, other_time):
+                    return False
+        return True
 
     def overlaps_time(self, other):
-        return self.interval.overlaps_time(other)
+        for self_time in self.interval.times:
+            for other_time in other.times:
+                if not self.interval.overlaps_time(self_time, other_time):
+                    return False
+        return True
 
     def distance_from_interval(self, other):
-        return self.interval.distance_from(other)
+        sum = 0
+        for self_time in self.interval.times:
+            for other_time in other.times:
+                sum += TimeInterval.distance_from(self_time, other_time)
+        return sum
 
     def __str__(self):
         return ' '.join(str(data) for data in self.data.values())
@@ -142,8 +154,9 @@ class Class(ClassTemplate):
     def distance_from_interval(self, interval):
         dist = 0
         for subclass in self.subclasses.values():
-            if not subclass.inside_time(interval):
-                dist += subclass.distance_from_interval(interval)
+            for subclass_int in subclass.interval.times:
+                for interval_time in interval.times:
+                    dist += TimeInterval.distance_from(subclass_int, interval_time)
         return max(1, dist)
 
     def __str__(self):
