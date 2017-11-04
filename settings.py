@@ -1,7 +1,7 @@
 import os
 import sqlite3
 
-from timeutil.timeutils import TimeInterval
+from timeutil.timeutils import TimeIntervalCollection
 
 """
 This class is a storage area for various variables and settings.
@@ -73,7 +73,7 @@ PREFERENCE DATA
 INTERVALS = []
 
 # Default interval
-DEFAULT_INTERVAL = TimeInterval(None, '8:00a-12:00p')
+DEFAULT_INTERVAL = TimeIntervalCollection(None, '8:00a-12:00p')
 
 """
 VARIABLES

@@ -1,9 +1,13 @@
-PRESET_DAYS = ['M', 'Tu', 'W', 'Th', 'F']
 from datetime import datetime, date
 from datetime import time as time
+from collections import namedtuple
+
+PRESET_DAYS = ['M', 'Tu', 'W', 'Th', 'F']
+DayTime = namedtuple(typename='DayTime', field_names='day times')
+TimeInterval = namedtuple(typename='TimeInterval', field_names='start_time end_time')
 
 
-class TimeInterval:
+class TimeIntervalCollection:
     """
     Expects day_col formatted as combinations of PRESET_DAYS
     Expects time_col formatted as TIME + a/p + - + TIME + a/p
@@ -57,23 +61,23 @@ class TimeInterval:
         if day_len == time_len:
             # Split them up if they are equal
             for i in range(0, day_len):
-                ret_pairs.append((days[i], times[i]))
+                ret_pairs.append(DayTime(days[i], times[i]))
             return ret_pairs
         elif day_len > time_len:
             # Distribute all times
             for i in range(0, time_len):
-                ret_pairs.append((days[i], times[i]))
+                ret_pairs.append(DayTime(days[i], times[i]))
             # Give remaining days the last time
             for i in range(time_len, day_len):
-                ret_pairs.append((days[i], times[time_len - 1]))
+                ret_pairs.append(DayTime(days[i], times[time_len - 1]))
             return ret_pairs
         else:
             # Distribute all days
             for i in range(0, day_len):
-                ret_pairs.append((days[i], times[i]))
+                ret_pairs.append(DayTime(days[i], times[i]))
             # Give remaining times the last day
             for i in range(day_len, time_len):
-                ret_pairs.append((days[day_len - 1], times[i]))
+                ret_pairs.append(DayTime(days[day_len - 1], times[i]))
             return ret_pairs
 
     """
@@ -117,14 +121,15 @@ class TimeInterval:
         for t_interval in t_intervals:
             # Find the hours split by '-'
             # Adding to a list here to make a real interval
-            time_interval = []
+            temp_time_storage = []
             for hour_time in t_interval.split('-'):
                 # Add 'm' to convert it to Python recognizable format
                 hour_time += 'm'
                 formatted_interval = datetime.strptime(hour_time, '%I:%M%p')
                 # Add the interval to the returned interval
-                time_interval.append(formatted_interval)
+                temp_time_storage.append(formatted_interval)
             # Add interval to the list of intervals
+            time_interval = TimeInterval(temp_time_storage[0], temp_time_storage[1])
             ret_times.append(time_interval)
         return ret_times
 
@@ -132,16 +137,29 @@ class TimeInterval:
     Check if times and days overlap.
     """
 
+    @staticmethod
     def overlaps_times_and_days(self, other):
+        """
+        Takes in two time interval collection objects.
+        :param self:
+        :param other:
+        :return:
+        """
         for day_time_pair in self.day_time_pairs:
             for other_day_time_pair in other.day_time_pairs:
                 if day_time_pair[0] == other_day_time_pair[0]:
-                    if TimeInterval.overlaps_time_intervals(day_time_pair[1], other_day_time_pair[1]):
+                    if TimeIntervalCollection.overlaps_time_intervals(day_time_pair[1], other_day_time_pair[1]):
                         return True
         return False
 
     @staticmethod
     def overlaps_time_intervals(self_time, other_time):
+        """
+        Expects two time interval named tuples.
+        :param self_time:
+        :param other_time:
+        :return:
+        """
         try:
             my_start = self_time[0]
             my_end = self_time[1]
@@ -156,17 +174,17 @@ class TimeInterval:
         return False
 
     """
-    Check if two time intervals overlap each other.
-    """
-    @staticmethod
-    def overlaps_time(self, other):
-        return TimeInterval.overlaps_time_intervals(self, other)
-
-    """
     Check if a time interval is inside of another.
     """
+
     @staticmethod
     def inside_time(self, other):
+        """
+        Expects two time interval named tuples.
+        :param self:
+        :param other:
+        :return:
+        """
         try:
             my_start = self[0]
             my_end = self[1]
@@ -185,6 +203,12 @@ class TimeInterval:
 
     @staticmethod
     def distance_from(self, other):
+        """
+        Expects two time interval named tuples.
+        :param self:
+        :param other:
+        :return:
+        """
         my_start = self[0]
         my_end = self[1]
 
@@ -206,13 +230,13 @@ for all methods. Basically represents something that can be done anytime.
 """
 
 
-class DefaultTimeInterval(TimeInterval):
+class DefaultTimeIntervalCollection(TimeIntervalCollection):
     def __init__(self):
         super().__init__(None, None)
         self.days = []
         self.times = []
 
-    def overlaps_times(self, other):
+    def overlaps_time_intervals(self_time, other_time):
         return False
 
     def overlaps_times_and_days(self, other):
