@@ -411,7 +411,7 @@ class MainApp(App):
                 sub_class_str += val.format_class(sub_class) + '\n'
 
             temp_box.add_widget(
-            # Putting the class description as the first label
+                # Putting the class description as the first label
                 MyLabel(text=class_desc, color=POPUP_TEXT_COLOR, valign='top', halign='left', size_hint=(1, .2)))
             # Then the actual class data itself
             temp_box.add_widget(
@@ -424,8 +424,6 @@ class MainApp(App):
         if val.best_classes:
             results_box.add_widget(
                 MyButton(text='Click to see a visual', valign='bottom', size_hint=(1, .2), on_press=val.show_schedule))
-
-        # Open the popup at the end
 
     def show_schedule(self, value):
         self.graph_schedule(self.best_classes)

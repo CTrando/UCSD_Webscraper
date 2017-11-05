@@ -2,6 +2,8 @@ from datetime import datetime, date
 from datetime import time as time
 from collections import namedtuple
 
+DAY_INDEX = 0
+TIME_INDEX = 1
 PRESET_DAYS = ['M', 'Tu', 'W', 'Th', 'F', ' ']
 DayTime = namedtuple(typename='DayTime', field_names='day times')
 TimeInterval = namedtuple(typename='TimeInterval', field_names='start_time end_time')
@@ -67,7 +69,7 @@ class TimeIntervalCollection:
             time_count = 0
             for day in days:
                 if day == ' ':
-                    time_count+=1
+                    time_count += 1
                 else:
                     ret_pairs.append(DayTime(day, times[time_count]))
             return ret_pairs
@@ -80,35 +82,46 @@ class TimeIntervalCollection:
                 ret_pairs.append(DayTime(days[day_len - 1], times[i]))
             return ret_pairs
 
-    """
-    Convert days string into a usable data form.
-    """
-
     @staticmethod
     def get_days(day_list):
+        """
+        Takes in a day string and converts it into an array of days.
+        Converting data into usable format.
+        :param day_list: In the form MWF M, etc.
+        :return: an array of days
+        """
         unsorted_days = []
         ret_days = [None] * len(day_list)
 
+        # Check if preset days inside the day string
         for day in PRESET_DAYS:
             if day in day_list:
+                # Check how many days inside the day string and add them
                 for i in range(0, day_list.count(day)):
                     unsorted_days.append(day)
 
+        # Based off the idea of counting sort
+        # Sort the days based on how early they appear inside the string
         for i in range(0, len(unsorted_days)):
+            # Set the index
             index = day_list.index(unsorted_days[i])
+            # If it is there, choose the index after the first one
             if ret_days[index]:
                 index = day_list.index(unsorted_days[i], index + 1)
+            # Put the unsorted day in its correct location
             ret_days[index] = unsorted_days[i]
+        # Removing extra Nones from the array if there happen to be any
         ret_days = [x for x in ret_days if x is not None]
         return ret_days
 
-    """
-    Convert time string into Python time object. Should be given in the form TIMEa-TIMEp
-    Ex: 8:00a-12:00p. Will fix to be more flexible later.
-    """
-
     @staticmethod
     def get_times(time_col):
+        """
+        Convert time string into Python time object. Should be given in the form TIMEa-TIMEp
+        Ex: 8:00a-12:00p. Will fix to be more flexible later.
+        :param time_col: The input time string
+        :return: An array of named tuples Time Intervals
+        """
         # If it is not in that usable form return nothing
         if time_col.find('-') == -1:
             return []
@@ -129,36 +142,37 @@ class TimeIntervalCollection:
                 # Add the interval to the returned interval
                 temp_time_storage.append(formatted_interval)
             # Add interval to the list of intervals
+            # Using named tuple here for readability
             time_interval = TimeInterval(temp_time_storage[0], temp_time_storage[1])
             ret_times.append(time_interval)
         return ret_times
 
-    """
-    Check if times and days overlap.
-    """
-
     @staticmethod
     def overlaps_times_and_days(self, other):
         """
-        Takes in two time interval collection objects.
-        :param self:
-        :param other:
-        :return:
+        Takes in two time interval collection objects and checks if they overlap
+        times and days.
+        :param self: One time interval
+        :param other: The other time interval
+        :return: True if they do overlap times and days, and False if they do not
         """
         for day_time_pair in self.day_time_pairs:
             for other_day_time_pair in other.day_time_pairs:
-                if day_time_pair[0] == other_day_time_pair[0]:
-                    if TimeIntervalCollection.overlaps_time_intervals(day_time_pair[1], other_day_time_pair[1]):
+                # Checking if the days overlap
+                # Days are stored at index 0 in day_time_pair
+                if day_time_pair[DAY_INDEX] == other_day_time_pair[DAY_INDEX]:
+                    if TimeIntervalCollection.overlaps_time_intervals(day_time_pair[TIME_INDEX],
+                                                                      other_day_time_pair[TIME_INDEX]):
                         return True
         return False
 
     @staticmethod
     def overlaps_time_intervals(self_time, other_time):
         """
-        Expects two time interval named tuples.
-        :param self_time:
-        :param other_time:
-        :return:
+        Takes in two time interval named tuples and returns if they overlap time intervals.
+        :param self_time: The first time interval
+        :param other_time: The other time interval
+        :return: True if they overlap and False if they do not
         """
         try:
             my_start = self_time[0]
@@ -166,10 +180,11 @@ class TimeIntervalCollection:
 
             other_start = other_time[0]
             other_end = other_time[1]
-        except IndexError as e:
+        except IndexError:
+            # If there is a failure of the named tuple return False by default
             return False
-        if (other_start <= my_start and my_start <= other_end) or (
-                        my_start <= other_start and other_start <= my_end):
+        # Check if it contained within the time interval
+        if (other_start <= my_start <= other_end) or (my_start <= other_start <= my_end):
             return True
         return False
 
@@ -180,67 +195,57 @@ class TimeIntervalCollection:
     @staticmethod
     def inside_time(self, other):
         """
+        Checks if the two time intervals are in inside each other.
         Expects two time interval named tuples.
-        :param self:
-        :param other:
-        :return:
+        :param self: The first time interval
+        :param other: The second time interval
+        :return: True if one interval is contained within the other
         """
         try:
-            my_start = self[0]
-            my_end = self[1]
+            # Using named tuple fields
 
-            other_start = other[0]
-            other_end = other[1]
-        except IndexError as e:
+            my_start = self.start_time
+            my_end = self.end_time
+
+            other_start = other.start_time
+            other_end = other.end_time
+        except IndexError:
             return True
         return (other_start <= my_start <= other_end) and (other_start <= my_end <= other_end) or \
                (my_start <= other_start <= my_end) and (my_start <= other_end <= my_end)
 
-    """
-    Find the distance between two intervals.
-    This method is probably wrong.
-    """
-
     @staticmethod
     def distance_from(self, other):
         """
+        Finds the distance between two intervals in hours.
         Expects two time interval named tuples.
-        :param self:
-        :param other:
-        :return:
+        :param self: One time interval
+        :param other: The other time interval
+        :return: The distance between them in minutes
         """
-        my_start = self[0]
-        my_end = self[1]
+        my_start = self.start_time
+        my_end = self.end_time
 
-        other_start = other[0]
-        other_end = other[1]
+        other_start = other.start_time
+        other_end = other.end_time
 
         one = abs((my_start - other_end)).total_seconds() / 3600
         two = abs((my_end - other_start).total_seconds() / 3600)
 
+        # Using mins so it doesn't go out of control
         return max(1, min(6, min(one, two)))
 
     def __str__(self):
         return str(self.times[0]) + ', ' + str(self.times[1])
 
 
-"""
-Just a default time interval class so that any class with no interval will just default to true
-for all methods. Basically represents something that can be done anytime.
-"""
-
-
 class DefaultTimeIntervalCollection(TimeIntervalCollection):
+    """
+    Just a default time interval class so that any class with no interval will just default to true
+    for all methods. Basically represents something that can be done anytime.
+    """
+
     def __init__(self):
         super().__init__(None, None)
         self.days = []
         self.times = []
-
-    def overlaps_time_intervals(self_time, other_time):
-        return False
-
-    def overlaps_times_and_days(self, other):
-        return False
-
-    def distance_from(self, other):
-        return 1
