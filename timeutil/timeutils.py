@@ -2,7 +2,7 @@ from datetime import datetime, date
 from datetime import time as time
 from collections import namedtuple
 
-PRESET_DAYS = ['M', 'Tu', 'W', 'Th', 'F']
+PRESET_DAYS = ['M', 'Tu', 'W', 'Th', 'F', ' ']
 DayTime = namedtuple(typename='DayTime', field_names='day times')
 TimeInterval = namedtuple(typename='TimeInterval', field_names='start_time end_time')
 
@@ -64,12 +64,12 @@ class TimeIntervalCollection:
                 ret_pairs.append(DayTime(days[i], times[i]))
             return ret_pairs
         elif day_len > time_len:
-            # Distribute all times
-            for i in range(0, time_len):
-                ret_pairs.append(DayTime(days[i], times[i]))
-            # Give remaining days the last time
-            for i in range(time_len, day_len):
-                ret_pairs.append(DayTime(days[i], times[time_len - 1]))
+            time_count = 0
+            for day in days:
+                if day == ' ':
+                    time_count+=1
+                else:
+                    ret_pairs.append(DayTime(day, times[time_count]))
             return ret_pairs
         else:
             # Distribute all days
@@ -86,13 +86,13 @@ class TimeIntervalCollection:
 
     @staticmethod
     def get_days(day_list):
-        day_list = day_list.replace(' ', '')
         unsorted_days = []
         ret_days = [None] * len(day_list)
 
         for day in PRESET_DAYS:
             if day in day_list:
-                unsorted_days.append(day)
+                for i in range(0, day_list.count(day)):
+                    unsorted_days.append(day)
 
         for i in range(0, len(unsorted_days)):
             index = day_list.index(unsorted_days[i])
