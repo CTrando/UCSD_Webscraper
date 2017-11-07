@@ -140,6 +140,7 @@ class Cleaner:
         print('Begin cleaning database.')
         curr_time = time.time()
         self.setup_database()
+        self.create_subclass_databases()
         self.create_links()
         self.validate_database()
         self.close()
@@ -157,6 +158,12 @@ class Cleaner:
             'LECTURE_KEY INTEGER, LAB_KEY INTEGER, '
             'DISCUSSION_KEY INTEGER, SEMINAR_KEY INTEGER, FINAL_KEY INTEGER)'
         )
+
+    def create_subclass_databases(self):
+        self.cursor.execute("SELECT ID, COURSE_ID, TYPE, DAYS FROM CLASSES")
+        courses = self.cursor.fetchall()
+        for course in courses:
+            print(course)
 
     def create_links(self):
         self.cursor.execute("SELECT DISTINCT COURSE_NUM FROM CLASSES")
