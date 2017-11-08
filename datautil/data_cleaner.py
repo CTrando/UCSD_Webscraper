@@ -134,6 +134,7 @@ DATA table
 class Cleaner:
     def __init__(self):
         self.database = sqlite3.connect(DATABASE_PATH)
+        self.database.row_factory = sqlite3.Row
         self.cursor = self.database.cursor()
 
     def clean(self):
@@ -141,15 +142,16 @@ class Cleaner:
         curr_time = time.time()
         self.setup_database()
         self.create_subclass_databases()
-        self.create_links()
-        self.validate_database()
+        # self.create_links()
+        # self.validate_database()
         self.close()
         fin_time = time.time()
-        print('Finished cleaning database in {} seconds'.format(fin_time-curr_time))
+        print('Finished cleaning database in {} seconds'.format(fin_time - curr_time))
 
     """
     Setup database
     """
+
     def setup_database(self):
         self.cursor.execute('DROP TABLE IF EXISTS DATA')
         self.cursor.execute(
@@ -160,10 +162,38 @@ class Cleaner:
         )
 
     def create_subclass_databases(self):
-        self.cursor.execute("SELECT ID, COURSE_ID, TYPE, DAYS FROM CLASSES")
+        self.cursor.execute("SELECT ID, COURSE_NUM, COURSE_ID, TYPE, DAYS FROM CLASSES")
         courses = self.cursor.fetchall()
         for course in courses:
-            print(course)
+            viewing_dict = dict(course)
+            course_type = str(course['TYPE'])
+            if not course_type.isupper() or len(course_type) == 0:
+                continue
+            #self.cursor.execute("DROP TABLE IF EXISTS {}_SUBCLASS".format(course_type))
+            self.cursor.execute("CREATE TABLE IF NOT EXISTS {}_SUBCLASS"
+                                "(COURSE_NUM TEXT, COURSE_ID TEXT, {}_KEY INTEGER, UNIQUE({}_KEY, COURSE_ID))"
+                                .format(course['TYPE'], course['TYPE'], course['TYPE']))
+            try:
+                self.cursor.execute("INSERT INTO {}_SUBCLASS VALUES(?, ?, ?)".format(course_type),
+                                    (course['COURSE_NUM'], course['COURSE_ID'], course['ID']))
+            except sqlite3.IntegrityError:
+                pass
+            #self.cursor.execute("DROP TABLE IF EXISTS {}_SUBCLASS".format(course_type))
+
+        self.cursor.execute("DROP TABLE IF EXISTS CLASS_LEGEND")
+        self.cursor.execute("CREATE TABLE CLASS_LEGEND(COURSE_NUM TEXT, COURSE_ID TEXT, LE_KEY INTEGER, DI_KEY INTEGER,"
+                            "LA_KEY INTEGER,"
+                            "UNIQUE(LE_KEY, DI_KEY, LA_KEY))")
+
+        self.cursor.execute("INSERT INTO CLASS_LEGEND(COURSE_NUM, COURSE_ID, LE_KEY) SELECT * FROM LE_SUBCLASS")
+        self.cursor.execute("SELECT * FROM LE_SUBCLASS INNER JOIN DI_SUBCLASS ON LE_SUBCLASS.COURSE_ID = DI_SUBCLASS.COURSE_ID")
+        #self.cursor.execute("SELECT * FROM LE_SUBCLASS, DI_SUBCLASS, LA_SUBCLASS WHERE LE_SUBCLASS.COURSE_NUM = DI_SUBCLASS.COURSE_NUM AND DI_SUBCLASS.COURSE_NUM = LA_SUBCLASS.COURSE_NUM")
+        test = self.cursor.fetchall()
+        for t in test:
+            view = dict(t)
+            self.cursor.execute("INSERT OR REPLACE INTO CLASS_LEGEND VALUES(?, ?, ?, ?)",
+                                (view['COURSE_NUM'], view['COURSE_ID'], view['LE_KEY'], view['DI_KEY']))
+            print(view)
 
     def create_links(self):
         self.cursor.execute("SELECT DISTINCT COURSE_NUM FROM CLASSES")
@@ -207,6 +237,7 @@ class Cleaner:
     """
     Make sure that there are no rows where every class (not including final) is null.
     """
+
     def validate_database(self):
         print('Begin validating database.')
         curr_time = time.time()
