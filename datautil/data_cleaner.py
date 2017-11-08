@@ -162,11 +162,14 @@ class Cleaner:
         )
 
     def create_subclass_databases(self):
+        course_types = []
         self.cursor.execute("SELECT ID, COURSE_NUM, COURSE_ID, TYPE, DAYS FROM CLASSES")
         courses = self.cursor.fetchall()
         for course in courses:
             viewing_dict = dict(course)
             course_type = str(course['TYPE'])
+            if course_type not in course_types and course_type.isupper():
+                course_types.append(course_type)
             if not course_type.isupper() or len(course_type) == 0:
                 continue
             #self.cursor.execute("DROP TABLE IF EXISTS {}_SUBCLASS".format(course_type))
@@ -180,19 +183,25 @@ class Cleaner:
                 pass
             #self.cursor.execute("DROP TABLE IF EXISTS {}_SUBCLASS".format(course_type))
 
-        self.cursor.execute("DROP TABLE IF EXISTS CLASS_LEGEND")
-        self.cursor.execute("CREATE TABLE CLASS_LEGEND(COURSE_NUM TEXT, COURSE_ID TEXT, LE_KEY INTEGER, DI_KEY INTEGER,"
-                            "LA_KEY INTEGER,"
-                            "UNIQUE(LE_KEY, DI_KEY, LA_KEY))")
 
-        self.cursor.execute("INSERT INTO CLASS_LEGEND(COURSE_NUM, COURSE_ID, LE_KEY) SELECT * FROM LE_SUBCLASS")
+        course_keys = [a + '_KEY' for a in course_types]
+        course_keys = ', '.join(map(str, course_keys))
+
+        self.cursor.execute("DROP TABLE IF EXISTS CLASS_LEGEND")
+
+        self.cursor.execute("CREATE TABLE CLASS_LEGEND (COURSE_NUM TEXT, COURSE_ID, {})".format(course_keys))
+
+        for t in course_types:
+            self.cursor.execute("INSERT INTO CLASS_LEGEND(COURSE_NUM, COURSE_ID, {}) SELECT * FROM {}".format(t+'_KEY', t+'_SUBCLASS'))
+
+
         self.cursor.execute("SELECT * FROM LE_SUBCLASS INNER JOIN DI_SUBCLASS ON LE_SUBCLASS.COURSE_ID = DI_SUBCLASS.COURSE_ID")
         #self.cursor.execute("SELECT * FROM LE_SUBCLASS, DI_SUBCLASS, LA_SUBCLASS WHERE LE_SUBCLASS.COURSE_NUM = DI_SUBCLASS.COURSE_NUM AND DI_SUBCLASS.COURSE_NUM = LA_SUBCLASS.COURSE_NUM")
         test = self.cursor.fetchall()
         for t in test:
             view = dict(t)
-            self.cursor.execute("INSERT OR REPLACE INTO CLASS_LEGEND VALUES(?, ?, ?, ?)",
-                                (view['COURSE_NUM'], view['COURSE_ID'], view['LE_KEY'], view['DI_KEY']))
+            #self.cursor.execute("INSERT OR REPLACE INTO CLASS_LEGEND(COURSE_NUM, COURSE_ID, LE_KEY, DI_KEY)",
+             #                   "(view['COURSE_NUM'], view['COURSE_ID'], view['LE_KEY'], view['DI_KEY'])")
             print(view)
 
     def create_links(self):
