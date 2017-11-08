@@ -163,46 +163,81 @@ class Cleaner:
 
     def create_subclass_databases(self):
         course_types = []
-        self.cursor.execute("SELECT ID, COURSE_NUM, COURSE_ID, TYPE, DAYS FROM CLASSES")
+        self.cursor.execute("SELECT ID, COURSE_NUM, COURSE_ID, TYPE, INSTRUCTOR FROM CLASSES")
         courses = self.cursor.fetchall()
         for course in courses:
             viewing_dict = dict(course)
+            instructor = str(course['INSTRUCTOR'])
+            key = course['ID']
             course_type = str(course['TYPE'])
+            course_id = str(course['COURSE_ID'])
+            course_num = course['COURSE_NUM']
+
+            if course_id is not None and len(course_id) == 0:
+                course_id = None
+
             if course_type not in course_types and course_type.isupper():
                 course_types.append(course_type)
+
             if not course_type.isupper() or len(course_type) == 0:
                 continue
-            #self.cursor.execute("DROP TABLE IF EXISTS {}_SUBCLASS".format(course_type))
+           # self.cursor.execute("DROP TABLE IF EXISTS {}_SUBCLASS".format(course_type))
             self.cursor.execute("CREATE TABLE IF NOT EXISTS {}_SUBCLASS"
-                                "(COURSE_NUM TEXT, COURSE_ID TEXT, {}_KEY INTEGER, UNIQUE({}_KEY, COURSE_ID))"
+                                "(COURSE_NUM TEXT, COURSE_ID TEXT, {}_KEY INTEGER, INSTRUCTOR TEXT, UNIQUE({}_KEY, COURSE_ID))"
                                 .format(course['TYPE'], course['TYPE'], course['TYPE']))
             try:
-                self.cursor.execute("INSERT INTO {}_SUBCLASS VALUES(?, ?, ?)".format(course_type),
-                                    (course['COURSE_NUM'], course['COURSE_ID'], course['ID']))
+                self.cursor.execute("INSERT INTO {}_SUBCLASS VALUES(?, ?, ?, ?)".format(course_type),
+                                    (course_num, course_id, key, instructor))
             except sqlite3.IntegrityError:
                 pass
             #self.cursor.execute("DROP TABLE IF EXISTS {}_SUBCLASS".format(course_type))
 
-
+        print(course_types)
         course_keys = [a + '_KEY' for a in course_types]
         course_keys = ', '.join(map(str, course_keys))
 
         self.cursor.execute("DROP TABLE IF EXISTS CLASS_LEGEND")
 
-        self.cursor.execute("CREATE TABLE CLASS_LEGEND (COURSE_NUM TEXT, COURSE_ID, {})".format(course_keys))
+        self.cursor.execute("CREATE TABLE CLASS_LEGEND (COURSE_NUM TEXT, COURSE_ID TEXT, {}, INSTRUCTOR TEXT, "
+                            "UNIQUE({}))".format(course_keys, course_keys))
+
+        print(course_types)
+        for t in course_types:
+            self.cursor.execute(
+                "SELECT * FROM {}".format(t + '_SUBCLASS'))
+            cl_list = self.cursor.fetchall()
+            for cl in cl_list:
+                cl = dict(cl)
+                self.cursor.execute("CREATE TEMP TABLE TAB (COURSE_NUM TEXT, COURSE_ID TEXT, {}, INSTRUCTOR TEXT, "
+                                    "UNIQUE({}))".format(course_keys, course_keys))
+
+                if cl['COURSE_ID'] is not None:
+                    self.cursor.execute("INSERT INTO TAB(COURSE_NUM, COURSE_ID, {}, INSTRUCTOR)"
+                                        "VALUES(?, ?, ?, ?)".format(t + '_KEY'),
+                                        (cl['COURSE_NUM'], cl['COURSE_ID'], cl[t + '_KEY'], cl['INSTRUCTOR']))
+
+                self.cursor.execute("INSERT INTO CLASS_LEGEND SELECT * FROM TAB")
+                self.cursor.execute("DROP TABLE IF EXISTS TAB")
 
         for t in course_types:
-            self.cursor.execute("INSERT INTO CLASS_LEGEND(COURSE_NUM, COURSE_ID, {}) SELECT * FROM {}".format(t+'_KEY', t+'_SUBCLASS'))
+            self.cursor.execute(
+                "SELECT * FROM {}".format(t + '_SUBCLASS'))
+            cl_list = self.cursor.fetchall()
+            for cl in cl_list:
+                cl = dict(cl)
+                self.cursor.execute("CREATE TEMP TABLE TAB (COURSE_NUM TEXT, COURSE_ID TEXT, {}, INSTRUCTOR TEXT, "
+                                    "UNIQUE({}))".format(course_keys, course_keys))
+
+                if cl['COURSE_ID'] is None:
+                    self.cursor.execute("INSERT INTO TAB SELECT * FROM CLASS_LEGEND WHERE "
+                                        "COURSE_NUM = ? AND INSTRUCTOR = ? AND {} ISNULL ".format(t+'_KEY'),
+                                        (cl['COURSE_NUM'], cl['INSTRUCTOR']))
+                    self.cursor.execute("UPDATE TAB SET {} = ?".format(t+'_KEY'), (cl[t+'_KEY'],))
 
 
-        self.cursor.execute("SELECT * FROM LE_SUBCLASS INNER JOIN DI_SUBCLASS ON LE_SUBCLASS.COURSE_ID = DI_SUBCLASS.COURSE_ID")
-        #self.cursor.execute("SELECT * FROM LE_SUBCLASS, DI_SUBCLASS, LA_SUBCLASS WHERE LE_SUBCLASS.COURSE_NUM = DI_SUBCLASS.COURSE_NUM AND DI_SUBCLASS.COURSE_NUM = LA_SUBCLASS.COURSE_NUM")
-        test = self.cursor.fetchall()
-        for t in test:
-            view = dict(t)
-            #self.cursor.execute("INSERT OR REPLACE INTO CLASS_LEGEND(COURSE_NUM, COURSE_ID, LE_KEY, DI_KEY)",
-             #                   "(view['COURSE_NUM'], view['COURSE_ID'], view['LE_KEY'], view['DI_KEY'])")
-            print(view)
+                self.cursor.execute("INSERT INTO CLASS_LEGEND SELECT * FROM TAB")
+                self.cursor.execute("DROP TABLE IF EXISTS TAB")
+
 
     def create_links(self):
         self.cursor.execute("SELECT DISTINCT COURSE_NUM FROM CLASSES")
