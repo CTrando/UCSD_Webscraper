@@ -12,7 +12,7 @@ class ClassTemplate:
 
         # Initialize class based on which table
         self.cursor = cursor
-        cursor.execute("SELECT * FROM {} WHERE ID = ?".format(table), (ID,))
+        cursor.execute("SELECT * FROM {} WHERE ROWID = ?".format(table), (ID,))
 
         self.data = dict(cursor.fetchone())
 
@@ -98,17 +98,17 @@ class Class(ClassTemplate):
         self.subclasses = {}
         self.final = None
 
-        if self.data['LECTURE_KEY']:
-            self.subclasses['LE'] = ClassTemplate(cursor, self.data['LECTURE_KEY'])
+        if self.data['LE_KEY']:
+            self.subclasses['LE'] = ClassTemplate(cursor, self.data['LE_KEY'])
 
-        if self.data['LAB_KEY']:
-            self.subclasses['LA'] = ClassTemplate(cursor, self.data['LAB_KEY'])
+        if self.data['LA_KEY']:
+            self.subclasses['LA'] = ClassTemplate(cursor, self.data['LA_KEY'])
 
-        if self.data['DISCUSSION_KEY']:
-            self.subclasses['DI'] = ClassTemplate(cursor, self.data['DISCUSSION_KEY'])
+        if self.data['DI_KEY']:
+            self.subclasses['DI'] = ClassTemplate(cursor, self.data['DI_KEY'])
 
-        if self.data['SEMINAR_KEY']:
-            self.subclasses['SE'] = ClassTemplate(cursor, self.data['SEMINAR_KEY'])
+        if self.data['SE_KEY']:
+            self.subclasses['SE'] = ClassTemplate(cursor, self.data['SE_KEY'])
 
         if self.data['FINAL_KEY']:
             self.final = ClassTemplate(cursor, self.data['FINAL_KEY'])

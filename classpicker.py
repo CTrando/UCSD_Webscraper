@@ -69,7 +69,7 @@ class ClassPicker():
 
     def validate_inputs(self):
         for pref_class in self.pref_classes:
-            self.cursor.execute("SELECT ID FROM DATA WHERE COURSE_NUM = ?", (pref_class,))
+            self.cursor.execute("SELECT rowid FROM DATA WHERE COURSE_NUM = ?", (pref_class,))
             if not len(self.cursor.fetchall()) > 0:
                 raise IOError('One of the inputs is not a valid class name!')
 
@@ -83,12 +83,13 @@ class ClassPicker():
     """
     def generate_class_set(self):
         for pref_class in self.pref_classes:
-            self.cursor.execute("SELECT ID FROM DATA WHERE COURSE_NUM = ?", (pref_class,))
+            self.cursor.execute("SELECT rowid FROM DATA WHERE COURSE_NUM = ?", (pref_class,))
             # The different sections of the given class
             pref_class_sections = []
 
             for id_tuple in self.cursor.fetchall():
-                ID = id_tuple['ID']
+                id_tuple = dict(id_tuple)
+                ID = id_tuple['rowid']
                 # Create a class object and add it to the sections
                 class_version = Class(self.cursor, ID)
                 pref_class_sections.append(class_version)
