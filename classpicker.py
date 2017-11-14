@@ -81,9 +81,10 @@ class ClassPicker():
     Will go into the database and find a list of classes with the given COURSE_NUM and add them 
     to the class set.
     """
+
     def generate_class_set(self):
         for pref_class in self.pref_classes:
-            self.cursor.execute("SELECT rowid FROM DATA WHERE COURSE_NUM = ?", (pref_class,))
+            self.cursor.execute("SELECT ROWID FROM DATA WHERE COURSE_NUM = ?", (pref_class,))
             # The different sections of the given class
             pref_class_sections = []
 
@@ -126,6 +127,7 @@ class ClassPicker():
              |  /\  |   
     ROW 1 CSE 20  CSE 20
     """
+
     def _get_candidates(self, row, w_set):
         # Make sure column is not greater than size of the array
         # If so, return
@@ -148,6 +150,7 @@ class ClassPicker():
     """
     Get fitness of the curent class set based on how well it fits into the time preferences.
     """
+
     def get_fitness(self, class_set):
         score = .5
         for interval in INTERVALS:

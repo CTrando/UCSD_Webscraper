@@ -231,12 +231,12 @@ class Cleaner:
                 "SELECT * FROM {}".format(t + '_SUBCLASS'))
             cl_list = self.cursor.fetchall()
             for cl in cl_list:
-                if cl['COURSE_NUM'] == 'CSE 11' and t == 'LA':
-                    print('hi')
-                    self.database.commit()
-                cl = dict(cl)
-                if cl['COURSE_NUM'] == 'CSE 11':
-                    print('hi')
+                # if cl['COURSE_NUM'] == 'CSE 11' and t == 'LA':
+                #     print('hi')
+                #     self.database.commit()
+                # cl = dict(cl)
+                # if cl['COURSE_NUM'] == 'CSE 11':
+                #     print('hi')
 
                 if cl['COURSE_ID'] == "None" or cl['COURSE_ID'] is None:
                     self.cursor.execute("INSERT INTO TAB SELECT * FROM CLASS_LEGEND WHERE "
@@ -255,11 +255,11 @@ class Cleaner:
             self.cursor.execute("DELETE FROM DEL")
 
         self.cursor.execute("SELECT ID FROM DEL")
-        for t in self.cursor.fetchall():
-            d = dict(t)
-            print(d)
-        self.database.commit()
-        self.database.commit()
+        # for t in self.cursor.fetchall():
+        #     d = dict(t)
+        #     print(d)
+        # self.database.commit()
+        # self.database.commit()
 
         self.cursor.execute("INSERT INTO DATA "
                             "SELECT * FROM CLASS_LEGEND".format(course_keys))

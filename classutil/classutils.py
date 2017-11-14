@@ -98,20 +98,13 @@ class Class(ClassTemplate):
         self.subclasses = {}
         self.final = None
 
-        if self.data['LE_KEY']:
-            self.subclasses['LE'] = ClassTemplate(cursor, self.data['LE_KEY'])
-
-        if self.data['LA_KEY']:
-            self.subclasses['LA'] = ClassTemplate(cursor, self.data['LA_KEY'])
-
-        if self.data['DI_KEY']:
-            self.subclasses['DI'] = ClassTemplate(cursor, self.data['DI_KEY'])
-
-        if self.data['SE_KEY']:
-            self.subclasses['SE'] = ClassTemplate(cursor, self.data['SE_KEY'])
-
-        if self.data['FINAL_KEY']:
-            self.final = ClassTemplate(cursor, self.data['FINAL_KEY'])
+        for subclass_key in self.data:
+            if 'KEY' not in subclass_key:
+                continue
+            subclass = self.data[subclass_key]
+            if subclass:
+                self.subclasses[subclass_key] = ClassTemplate(cursor, self.data[subclass_key])
+                print(subclass)
 
     """
     Return if the classes overlap. Will add more arguments in the future. 
