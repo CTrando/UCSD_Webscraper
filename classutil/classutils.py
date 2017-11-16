@@ -104,7 +104,7 @@ class Class(ClassTemplate):
             subclass = self.data[subclass_key]
             if subclass:
                 self.subclasses[subclass_key] = ClassTemplate(cursor, self.data[subclass_key])
-                print(subclass)
+                #print(subclass)
 
     """
     Return if the classes overlap. Will add more arguments in the future. 

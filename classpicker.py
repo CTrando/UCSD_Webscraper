@@ -23,6 +23,9 @@ class ClassPicker():
         self.pref_classes = []
         self.candidates = []
 
+        # Using DP
+        self.dp_buffer = {}
+
         # Solution variables
         self.best_candidate = None
         self.best_candidate_score = -sys.maxsize
@@ -152,21 +155,46 @@ class ClassPicker():
     """
 
     def get_fitness(self, class_set):
-        score = .5
-        for interval in INTERVALS:
-            temp_score = .5
-            for cl in class_set:
-                # If it is contained in the interval reward the set
-                if cl.inside_time(interval):
-                    temp_score += 1 / cl.distance_from_interval(interval)
-                # If it does overlaps in the interval punish the set
-                elif cl.overlaps_time(interval):
-                    temp_score += .5 * cl.distance_from_interval(interval)
-                else:
-                    temp_score += .1 * cl.distance_from_interval(interval)
-            score = max(temp_score, score)
+        if len(class_set) == 1:
+            cl = class_set[0]
+            score = .5
+            for interval in INTERVALS:
+                if cl in self.dp_buffer:
+                    score = self.dp_buffer[(interval, cl)]
+                    continue
 
-        return score
+                score += self.get_score(cl, interval)
+                self.dp_buffer[(interval, cl)] = score
+            return score
+
+        curr_class = class_set.pop()
+        working_copy = tuple(class_set)
+        score = 0
+
+        for interval in INTERVALS:
+            score += self.get_score(curr_class, interval)
+
+        if working_copy in self.dp_buffer:
+            class_set.append(curr_class)
+            return score + self.dp_buffer[working_copy]
+
+        cumulative_score = score + self.get_fitness(class_set)
+        self.dp_buffer[working_copy] = cumulative_score
+
+        class_set.append(curr_class)
+        return cumulative_score
+
+    def get_score(self, cl, interval):
+        temp_score = 0
+        # If it is contained in the interval reward the set
+        if cl.inside_time(interval):
+            temp_score += 1 / cl.distance_from_interval(interval)
+        # If it does overlaps in the interval punish the set
+        elif cl.overlaps_time(interval):
+            temp_score += .5 * cl.distance_from_interval(interval)
+        else:
+            temp_score += .1 * cl.distance_from_interval(interval)
+        return temp_score
 
     # TODO implement days preferences
     def filter_by_days(self, class_set, str_days):
