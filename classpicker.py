@@ -1,6 +1,7 @@
 import os
 import sqlite3
 import sys
+import timeit
 
 from classutil.classutils import *
 from settings import DATABASE_PATH, INTERVALS, DEFAULT_INTERVAL, HOME_DIR
@@ -47,6 +48,8 @@ class ClassPicker():
         # Starting generation
         self.generate_class_set()
 
+        print('Got candidates in {} seconds'
+              .format(timeit.timeit(self.get_candidates, number=1)))
         # Getting and validating outputs
         self.get_candidates()
         self.validate_outputs()
