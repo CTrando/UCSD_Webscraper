@@ -1,10 +1,9 @@
 import os
 import sqlite3
 import sys
-import timeit
 
 from classutil.classutils import *
-from settings import DATABASE_PATH, INTERVALS, DEFAULT_INTERVAL, HOME_DIR
+from settings import DATABASE_PATH, DEFAULT_INTERVAL, HOME_DIR, INTERVALS
 
 """
 Picks classes and autogenerates schedules.
@@ -20,11 +19,14 @@ class ClassPicker():
         self.cursor = self.database.cursor()
 
         # Preparing for DFS
+        # List of possible classes with given course nums
         self.class_set = []
+        # List of classes corresponding to correct course nums
         self.pref_classes = []
+        # List of possible schedules
         self.candidates = []
 
-        # Using DP
+        # DP buffer for top down memoization
         self.dp_buffer = {}
 
         # Solution variables
@@ -33,11 +35,12 @@ class ClassPicker():
 
     # Returns a schedule with the given inputs and intervals
     def pick(self, inputs=None, intervals=None):
-        # Set INTERVALS to intervals
+        # Set INTERVALS to intervals if there are no specified intervals
         if intervals and len(intervals) > 0:
             global INTERVALS
             INTERVALS = intervals
 
+        # Preferred classes received from GUI or command line
         # Formatting inputs
         self.pref_classes = self.format_inputs(inputs)
 
@@ -45,11 +48,9 @@ class ClassPicker():
         self.validate_variables()
         self.validate_inputs()
 
-        # Starting generation
-        self.generate_class_set()
+        # Get the classes with the specified course names
+        self.class_set = self.generate_class_set(self.pref_classes)
 
-        print('Got candidates in {} seconds'
-              .format(timeit.timeit(self.get_candidates, number=1)))
         # Getting and validating outputs
         self.get_candidates()
         self.validate_outputs()
@@ -57,11 +58,10 @@ class ClassPicker():
         # Return output
         return self.get_output()
 
-    """
-    Command line method for grabbing classes from input.
-    """
-
     def get_input(self):
+        """
+        Helper method for grabbing input from the command line.
+        """
         my_input = input('Enter the classes that you want like so (CSE 3, CSE 8A, CSE 8B)')
         self.pref_classes = my_input.split(', ')
         self.validate_inputs()
@@ -83,13 +83,17 @@ class ClassPicker():
         if not self.best_candidate:
             raise RuntimeError('It appears that there is no best candidate.')
 
-    """
-    Will go into the database and find a list of classes with the given COURSE_NUM and add them 
-    to the class set.
-    """
+    def generate_class_set(self, pref_classes):
+        """
+        Accesses the database and returns the list of classes with the corresponding course num.
+        :param pref_classes the list of classes we are trying to select
+        :return The corresponding class set
+        """
 
-    def generate_class_set(self):
-        for pref_class in self.pref_classes:
+        # Where the classes will be stored
+        class_set = []
+        # Access each preferred class in given list and store it inside class_set
+        for pref_class in pref_classes:
             self.cursor.execute("SELECT ROWID FROM DATA WHERE COURSE_NUM = ?", (pref_class,))
             # The different sections of the given class
             pref_class_sections = []
@@ -102,7 +106,8 @@ class ClassPicker():
                 pref_class_sections.append(class_version)
 
             # Adding the section to the class set
-            self.class_set.append(pref_class_sections)
+            class_set.append(pref_class_sections)
+        return class_set
 
     def get_output(self):
         print(self.best_candidate_score)
@@ -153,11 +158,19 @@ class ClassPicker():
                 col_set.append(self.class_set[row][col])
                 self._get_candidates(row + 1, col_set)
 
-    """
-    Get fitness of the curent class set based on how well it fits into the time preferences.
-    """
-
     def get_fitness(self, class_set):
+        """
+        Get fitness of current class set using top down dynamic programming with memoization
+        to store repeating sub-problems. This method will run the get_score method on each of
+        the children and return the result. This method only uses one list, although it creates
+        many tuples in order to utilize dynamic programming.
+
+        :param class_set: The class set we are observing currently
+        :return: The score of the whole class set
+        """
+
+        # Base case: when the length of the set is 1, we can run the get_score method
+        # and get the score of the only class
         if len(class_set) == 1:
             cl = class_set[0]
             score = .5
@@ -170,43 +183,55 @@ class ClassPicker():
                 self.dp_buffer[(interval, cl)] = score
             return score
 
+        # Otherwise, pop the first class from the set and run the method on the remaining set
         curr_class = class_set.pop()
+        # Conver the set into a tuple for dict storage
         working_copy = tuple(class_set)
         score = 0
 
+        # Get the score of the class that we popped
         for interval in INTERVALS:
             score += self.get_score(curr_class, interval)
 
+        # Check if the resulting set is inside the buffer
+        # If so, we have already solved the sub-problem and can use its result
         if working_copy in self.dp_buffer:
+            # We can add the popped class back to the set and return the value from our dict
             class_set.append(curr_class)
+            # No need to store the result here because it is done after the recursive call
             return score + self.dp_buffer[working_copy]
 
+        # Otherwise we can put the score into our DP array so it can be used in the future
+        # Recursively go until the base case is run
         cumulative_score = score + self.get_fitness(class_set)
         self.dp_buffer[working_copy] = cumulative_score
 
+        # Add the class back to prevent altering
         class_set.append(curr_class)
+        # Return the cumulative score
         return cumulative_score
 
-    def get_score(self, cl, interval):
+    @staticmethod
+    def get_score(cl, interval):
+        """
+        Will return the score based on the times and intervals given.
+
+        :param cl: The class we are observing
+        :param interval: The specific interval we are comparing to
+        :return: the score that we have given this class based on our heuristic
+        """
         temp_score = 0
-        # If it is contained in the interval reward the set
+        # If it is contained in the interval reward the class
         if cl.inside_time(interval):
             temp_score += 1 / cl.distance_from_interval(interval)
-        # If it does overlaps in the interval punish the set
+        # If it does overlaps in the interval reward the set a little less
         elif cl.overlaps_time(interval):
             temp_score += .5 * cl.distance_from_interval(interval)
+        # Otherwise punish the set
         else:
             temp_score += .1 * cl.distance_from_interval(interval)
+
+        # TODO fix the heuristic for the score based on time
         return temp_score
 
-    # TODO implement days preferences
-    def filter_by_days(self, class_set, str_days):
-        ret_list = []
-        for row in class_set:
-            list = []
-            for col in row:
-                lec = col.lecture
-                if lec.is_in_days(str_days):
-                    list.append(col)
-            ret_list.append(list)
-        return ret_list
+        # TODO implement days preferences
