@@ -1,4 +1,5 @@
 import random
+import threading
 import time
 
 from kivy import Config
@@ -16,6 +17,7 @@ from kivy.uix.popup import Popup
 from kivy.uix.stacklayout import StackLayout
 from kivy.uix.textinput import TextInput
 
+import startup
 from ScheduleGraph import MyGraph
 from classpicker import ClassPicker
 from datautil import data_cleaner, data_parser
@@ -23,8 +25,6 @@ from scraper import scraper
 from scraper.departmentscraper import DepartmentScraper
 from settings import IMAGE_DIR, POPUP_TEXT_COLOR
 from timeutil.timeutils import TimeIntervalCollection
-
-import threading
 
 Config.set('graphics', 'font-name', 'Times')
 Config.set('input', 'mouse', 'mouse, multitouch_on_demand')
@@ -299,27 +299,35 @@ class MainApp(App):
         return ' '.join(ret)
 
     def popup_webscrape(self, value):
+        # Box layouts for positioning
         info_box = BoxLayout(orientation='vertical', size_hint=(1, 1))
         username_box = BoxLayout(orientation='vertical', size_hint=(.5, 1))
         password_box = BoxLayout(orientation='vertical', size_hint=(.5, 1))
 
-        username_box.add_widget(MyLabel(text='Enter your username:', size_hint=(.5, None), height=50))
+        # Widgets which contain information about username and password
         self.username_input = TextInput(size_hint=(.5, None), height=50)
+        self.password_input = TextInput(size_hint=(.5, None), height=50)
+        login_button = MyButton(text='Login', size_hint=(.5, 1), on_press=self.webscrape)
+
+        username_box.add_widget(MyLabel(text='Enter your username:', size_hint=(.5, None), height=50))
         self.username_input.multiline = False
         self.username_input.write_tab = False
         username_box.add_widget(self.username_input)
 
         password_box.add_widget(MyLabel(text='Enter your password:', size_hint=(.5, None), height=50))
-        self.password_input = TextInput(size_hint=(.5, None), height=50)
         self.password_input.multiline = False
+        # Setting it to password
         self.password_input.password = True
         self.password_input.write_tab = False
+        # Binding it to make it login with enter press
+        self.password_input.bind(on_text_validate=self.webscrape)
         password_box.add_widget(self.password_input)
 
         info_box.add_widget(username_box)
         info_box.add_widget(password_box)
         info_box.add_widget(Label(size_hint=(1, 1)))
-        info_box.add_widget(MyButton(text='Login', size_hint=(.5, 1), on_press=self.webscrape))
+
+        info_box.add_widget(login_button)
         info_box.add_widget(Label(size_hint=(1, 1)))
 
         popup = Popup(title='Login', title_size='24sp', title_color=(0, 0, 0, 1), size_hint=(.8, .8), content=info_box)
@@ -454,4 +462,5 @@ class ClassRow():
 
 
 if __name__ == '__main__':
+    startup.start()
     MainApp().run()

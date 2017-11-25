@@ -1,21 +1,32 @@
 import os
+import sqlite3
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
-from settings import HTML_STORAGE, HOME_DIR, WEBREG_URL, MANUAL_MODE, TIMEOUT, DEPARTMENTS, CLASS_SEARCH_TIMEOUT
+from settings import HTML_STORAGE, HOME_DIR, WEBREG_URL, MANUAL_MODE, TIMEOUT, CLASS_SEARCH_TIMEOUT, \
+    DATABASE_PATH, CURRENT_CLASS_INDEX, DRIVER_PATH
 
 
 class Scraper:
     def __init__(self, username=None, password=None):
-        # Go to web browser directory
-        os.chdir(os.path.join(HOME_DIR, "driver"))
-
         # Keeping track of HTML directory
         self.dir_path = None
         self.login_url = WEBREG_URL
+
+        # Connecting to the database for the list of departments
+        self.database = sqlite3.connect(DATABASE_PATH)
+        self.cursor = self.database.cursor()
+        self.cursor.execute("SELECT DEPT_CODE FROM DEPARTMENT")
+        # fetching the data returns a tuple with one element,
+        # so using list comprehension to convert the data
+        self.departments = [i[0] for i in self.cursor.fetchall()]
+
+        # Making sure list of departments exist
+        assert len(self.departments) != 0, \
+            'You must scrape departments before you can scrape from WebReg!'
 
         # Take input manually if does not come from the GUI
         if not username and not password:
@@ -29,7 +40,8 @@ class Scraper:
             self.username = username
             self.password = password
 
-        self.browser = webdriver.Chrome()
+        # Directing Python to browser to chrome executable file
+        self.browser = webdriver.Chrome(executable_path=DRIVER_PATH)
         self.browser.set_page_load_timeout(TIMEOUT)
 
         os.chdir(HOME_DIR)
@@ -50,7 +62,7 @@ class Scraper:
 
     def pick_quarter(self):
         try:
-            submit = WebDriverWait(self.browser, TIMEOUT).until(EC.presence_of_element_located(
+            WebDriverWait(self.browser, TIMEOUT).until(EC.presence_of_element_located(
                 (By.ID, 'startpage-button-go')
             ))
             while self.browser.find_element_by_id('startpage-button-go'):
@@ -60,8 +72,9 @@ class Scraper:
             pass
 
     def iter_departments(self):
-        dept_list = DEPARTMENTS
-        dept_list = dept_list[130:]
+        dept_list = self.departments
+        # Creating a shallow copy through list slicing
+        dept_list = dept_list[CURRENT_CLASS_INDEX:]
         for department in dept_list:
             self.search_department(department)
             self.iter_pages(department)
@@ -75,7 +88,6 @@ class Scraper:
             class_search.click()
             class_search.send_keys(department)
             class_search.send_keys(Keys.RETURN)
-
         except Exception as e:
             print(e)
             pass
@@ -84,7 +96,7 @@ class Scraper:
         # now I should be at the course pages
         try:
             page_ul = WebDriverWait(self.browser, TIMEOUT).until(EC.presence_of_element_located
-                                                             ((By.CLASS_NAME, 'jPag-pages')))
+                                                                 ((By.CLASS_NAME, 'jPag-pages')))
         except Exception:
             print('No classes found with this dept code')
             return

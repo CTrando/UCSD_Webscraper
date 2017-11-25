@@ -8,15 +8,20 @@ This class is a storage area for various variables and settings.
 """
 
 """
-DIRECTORIES
+PATHS
 """
 
 # Where the directory is placed
 HOME_DIR = os.getcwd()
 # Database directory
-DATABASE_PATH = 'database/data.db'
+DATABASE_PATH = os.path.join(HOME_DIR, 'database','data.db')
 # Image directory
-IMAGE_DIR = 'images'
+IMAGE_DIR = os.path.join(HOME_DIR, 'images')
+
+# Where the classes are stored
+HTML_STORAGE = os.path.join(HOME_DIR, 'classes')
+
+DRIVER_PATH = os.path.join(HOME_DIR, 'driver', 'chromedriver')
 
 """
 MODES
@@ -33,40 +38,6 @@ DEPARTMENT_URL = 'https://act.ucsd.edu/scheduleOfClasses/scheduleOfClassesStuden
 WEBREG_URL = 'https://act.ucsd.edu/webreg2/start'
 
 """
-DEPARTMENT DATA INFORMATION
-"""
-# Is list of current departments
-DEPARTMENTS = []
-
-# Connect to the department database and see if it has names
-database = sqlite3.connect(DATABASE_PATH)
-cursor = database.cursor()
-depts = []
-
-try:
-    cursor.execute('SELECT DEPT_CODE FROM DEPARTMENT')
-    depts = cursor.fetchall()
-except Exception:
-    pass
-
-# If no departments in database, then scrape
-if len(depts) <= 0:
-    from scraper import departmentscraper
-
-    dept_scraper = departmentscraper.DepartmentScraper()
-    dept_scraper.scrape()
-    # Update depts
-    cursor.execute('SELECT DEPT_CODE FROM DEPARTMENT')
-    depts = cursor.fetchall()
-
-# Put depts into DEPARTMENTS, making sure to normalize string
-for code in depts:
-    DEPARTMENTS.append(code[0].strip())
-
-# Where the classes are stored
-HTML_STORAGE = 'classes'
-
-"""
 PREFERENCE DATA
 """
 # Intervals
@@ -78,6 +49,10 @@ DEFAULT_INTERVAL = TimeIntervalCollection(None, '8:00a-12:00p')
 """
 VARIABLES
 """
+# Current class index for web scraping
+CURRENT_CLASS_INDEX = 0
+
+
 # Time for timeout for browser
 TIMEOUT = 30
 
