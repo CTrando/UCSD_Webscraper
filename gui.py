@@ -1,18 +1,10 @@
 import random
 import threading
-import time
 
 from kivy import Config
 from kivy.animation import Animation
 from kivy.app import App
 from kivy.clock import Clock
-from kivy.graphics import Color, Rectangle
-from kivy.graphics.vertex_instructions import RoundedRectangle
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.button import Button
-from kivy.uix.gridlayout import GridLayout
-from kivy.uix.image import Image
-from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.uix.stacklayout import StackLayout
 from kivy.uix.textinput import TextInput
@@ -21,6 +13,9 @@ import startup
 from ScheduleGraph import MyGraph
 from classpicker import ClassPicker
 from datautil import data_cleaner, data_parser
+from gui.layouts.rootlayout import *
+from gui.widgets.buttons import MyButton
+from gui.widgets.labels import *
 from scraper import scraper
 from scraper.departmentscraper import DepartmentScraper
 from settings import IMAGE_DIR, POPUP_TEXT_COLOR
@@ -28,106 +23,6 @@ from timeutil.timeutils import TimeIntervalCollection
 
 Config.set('graphics', 'font-name', 'Times')
 Config.set('input', 'mouse', 'mouse, multitouch_on_demand')
-
-
-class RootLayout(BoxLayout):
-    def __init__(self, **kwargs):
-        super(RootLayout, self).__init__(**kwargs)
-        self.orientation = 'vertical'
-        self.padding = (50, 50)
-        with self.canvas.before:
-            Color(.95, .95, .95, 1)
-            self.texture = Image(source=IMAGE_DIR + '/background_logo.jpg').texture
-            self.width = self.texture.width
-            self.height = self.texture.height
-
-            self.bound_box = Rectangle(size=self.size, pos=self.pos)
-            self.image_box = Rectangle(size=self.size, pos=self.pos, texture=self.texture)
-
-        self.bind(size=self._update_rect, pos=self._update_rect)
-
-    def _update_rect(self, instance, value):
-        self.bound_box.pos = instance.pos
-        self.bound_box.size = instance.size
-
-        middle = [instance.size[0] / 2, instance.size[1] / 2]
-        mid_tex = [self.texture.width / 2, self.texture.height / 2]
-
-        self.image_box.pos = [middle[i] - mid_tex[i] for i in range(0, 2)]
-
-
-class MyLabel(Label):
-    def __init__(self, background=None, color=(0, 0, .4, 1), **kwargs):
-        super(MyLabel, self).__init__(**kwargs)
-        self.color = color
-
-        self.rect = RoundedRectangle(size=self.size, pos=self.pos)
-        if background:
-            with self.canvas.before:
-                self.rect = RoundedRectangle(size=self.size, pos=self.pos)
-                self.rect.source = background
-        self.bind(size=self._update_rect, pos=self._update_rect)
-
-    def _update_rect(self, instance, value):
-        self.text_size = instance.size
-        self.rect.pos = instance.pos
-        self.rect.size = instance.size
-
-
-class BackgroundBoxLayout(BoxLayout):
-    def __init__(self, color=None, background=None, **kwargs):
-        super().__init__(**kwargs)
-
-        with self.canvas.before:
-            self.rect = Rectangle(size=self.size, pos=self.pos)
-            if color:
-                Color(color[0], color[1], color[2], color[3])
-            if background:
-                self.rect.source = background
-        self.bind(size=self._update_rect, pos=self._update_rect)
-
-    def _update_rect(self, instance, value):
-        self.rect.pos = instance.pos
-        self.rect.size = instance.size
-
-
-class MyColoredLabel(MyLabel):
-    def __init__(self, color=None, **kwargs):
-        super(MyColoredLabel, self).__init__(**kwargs)
-        with self.canvas.before:
-            if color:
-                Color(color[0], color[1], color[2], color[3])
-            else:
-                Color(0, 0, 0, 1)
-            self.rect = RoundedRectangle(size=self.size, pos=self.pos)
-            self.bind(size=self._update_rect, pos=self._update_rect)
-
-
-class TimeLabel(MyLabel):
-    def update(self, *args):
-        self.text = str(time.asctime(time.localtime(time.time())))
-
-
-class MyGridLayout(GridLayout):
-    def __init__(self, **kwargs):
-        # make sure we aren't overriding any important functionality
-        super(MyGridLayout, self).__init__(**kwargs)
-
-        with self.canvas.before:
-            Color(0, 0, 0, 1)  # green; colors range from 0-1 instead of 0-255
-            self.rect = Rectangle(size=self.size, pos=self.pos)
-
-        self.bind(size=self._update_rect, pos=self._update_rect)
-
-    def _update_rect(self, instance, value):
-        self.rect.pos = instance.pos
-        self.rect.size = instance.size
-
-
-class MyButton(Button):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.background_color = (0, .5, 1, 1)
 
 
 class MainApp(App):
@@ -255,7 +150,7 @@ class MainApp(App):
         self.class_input.text = self.class_input.text.rstrip().strip()
 
         self.class_rows.append(
-            ClassRow(widget=self.classes_box, color=(.97, .97, .97, 1), class_name=self.class_input.text))
+            ClassRow(widget=self.classes_box, class_name=self.class_input.text))
         print([row.class_name for row in self.class_rows])
         Clock.schedule_once(self.focus_text)
         self.class_input.text = ''
@@ -420,10 +315,10 @@ class MainApp(App):
 
             temp_box.add_widget(
                 # Putting the class description as the first label
-                MyLabel(text=class_desc, color=POPUP_TEXT_COLOR, valign='top', halign='left', size_hint=(1, .2)))
+                MyLabel(text=class_desc, text_color=POPUP_TEXT_COLOR, valign='top', halign='left', size_hint=(1, .2)))
             # Then the actual class data itself
             temp_box.add_widget(
-                MyLabel(text=sub_class_str, color=POPUP_TEXT_COLOR, font_size='14sp', valign='top', halign='left',
+                MyLabel(text=sub_class_str, text_color=POPUP_TEXT_COLOR, font_size='14sp', valign='top', halign='left',
                         size_hint=(1, .8)))
             # Add the container to the results box
             results_box.add_widget(temp_box)
@@ -438,7 +333,7 @@ class MainApp(App):
 
 
 class ClassRow():
-    def __init__(self, parent_list=MainApp.class_rows, color=(.6, .6, .6, 1), **kwargs):
+    def __init__(self, parent_list=MainApp.class_rows, color=(.97, .97, .97, 1), **kwargs):
         self.parent_list = parent_list
         if 'class_name' in kwargs:
             self.class_name = kwargs['class_name'].upper()
@@ -447,9 +342,9 @@ class ClassRow():
         if 'widget' in kwargs:
             self.layout = BoxLayout(size_hint=(1, None), height=50)
             self.widget = kwargs['widget']
-            self.label = MyColoredLabel(text=self.class_name, halign='center', valign='center',
-                                        size_hint=(.6, None), color=color,
-                                        height=50)
+            self.label = MyLabel(text=self.class_name, halign='center', valign='center',
+                                 size_hint=(.6, None), background_color=color,
+                                 height=50)
             self.button = MyButton(text='Remove', size_hint=(.4, None), height=50)
             self.button.bind(on_press=self.destroy)
             self.layout.add_widget(self.label)

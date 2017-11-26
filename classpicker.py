@@ -80,6 +80,9 @@ class ClassPicker():
                 raise IOError('One of the inputs is not a valid class name!')
 
     def validate_outputs(self):
+        """
+        Ensuring that there is actually an output, otherwise will throw an error.
+        """
         if not self.best_candidate:
             raise RuntimeError('It appears that there is no best candidate.')
 
@@ -120,26 +123,26 @@ class ClassPicker():
     def get_candidates(self):
         self._get_candidates(0, [])
 
-    """
-    The strategy here is to represent the class set as a 2D array, and then have a loop to 
-    go down the col. Each time it hits a new col, it will call itself with the next row down.
-    
-    The algorithm will terminate when the column is greater than the size of the list.
-    
-    Once the algorithm returns, it will go to its original column and go down one row to 
-    call itself again with the next column over. 
-    
-    If it hits a case where the classes are not valid, then it will backtrack and ignore 
-    any combinations with that set of possibilities.   
-    
-    Visualize as follows:
-          COL 0   COL 1
-    ROW 0 CSE 11  CSE 11
-             |  /\  |   
-    ROW 1 CSE 20  CSE 20
-    """
-
     def _get_candidates(self, row, w_set):
+        """
+        The strategy here is to represent the class set as a 2D array, and then have a loop to
+        go down the col. Each time it hits a new col, it will call itself with the next row down.
+
+        The algorithm will terminate when the column is greater than the size of the list.
+
+        Once the algorithm returns, it will go to its original column and go down one row to
+        call itself again with the next column over.
+
+        If it hits a case where the classes are not valid, then it will backtrack and ignore
+        any combinations with that set of possibilities.
+
+        Visualize as follows:
+                  COL 0   COL 1
+            ROW 0 CSE 11  CSE 11
+                     |  /\  |
+            ROW 1 CSE 20  CSE 20
+        """
+
         # Make sure column is not greater than size of the array
         # If so, return
         if row >= len(self.class_set):
@@ -185,7 +188,7 @@ class ClassPicker():
 
         # Otherwise, pop the first class from the set and run the method on the remaining set
         curr_class = class_set.pop()
-        # Conver the set into a tuple for dict storage
+        # Convert the set into a tuple for dict storage
         working_copy = tuple(class_set)
         score = 0
 
@@ -208,6 +211,7 @@ class ClassPicker():
 
         # Add the class back to prevent altering
         class_set.append(curr_class)
+
         # Return the cumulative score
         return cumulative_score
 
