@@ -173,7 +173,7 @@ class Class(ClassTemplate):
         dist = 0
         for subclass in self.subclasses.values():
             dist += subclass.distance_from_interval(interval)
-        return max(1, dist)
+        return dist
 
     def __str__(self):
         """

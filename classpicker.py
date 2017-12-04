@@ -233,7 +233,7 @@ class ClassPicker():
             temp_score += .5 * cl.distance_from_interval(interval)
         # Otherwise punish the set
         else:
-            temp_score += .1 * cl.distance_from_interval(interval)
+            temp_score -= .1 * cl.distance_from_interval(interval)
 
         # TODO fix the heuristic for the score based on time
         return temp_score

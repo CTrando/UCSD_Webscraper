@@ -42,6 +42,8 @@ Clone the repository into a folder with:
 
 Navigate to that folder.
 
+To install the necessary libraries, run ```pip install -r libs.txt``` from a terminal or console. Wait until all the libraries have finished installing.
+
 To run the program, run:
 `python gui.py` in the terminal or some equivalent IDE.
 

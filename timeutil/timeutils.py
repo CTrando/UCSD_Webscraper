@@ -6,7 +6,7 @@ DAY_INDEX = 0
 TIME_INDEX = 1
 PRESET_DAYS = ['M', 'Tu', 'W', 'Th', 'F', ' ']
 DayTime = namedtuple(typename='DayTime', field_names='day times')
-TimeInterval = namedtuple(typename='TimeInterval', field_names='start_time end_time')
+TimeInterval = namedtuple(typename='TimeInterval', field_names='start_time end_time midpoint')
 
 
 class TimeIntervalCollection:
@@ -143,7 +143,11 @@ class TimeIntervalCollection:
                 temp_time_storage.append(formatted_interval)
             # Add interval to the list of intervals
             # Using named tuple here for readability
-            time_interval = TimeInterval(temp_time_storage[0], temp_time_storage[1])
+            start_time = temp_time_storage[0]
+            end_time = temp_time_storage[1]
+            mid_point = start_time + (end_time-start_time)/2
+
+            time_interval = TimeInterval(start_time, end_time, mid_point)
             ret_times.append(time_interval)
         return ret_times
 
@@ -215,25 +219,28 @@ class TimeIntervalCollection:
                (my_start <= other_start <= my_end) and (my_start <= other_end <= my_end)
 
     @staticmethod
-    def distance_from(self, other):
+    def distance_from(me, other):
         """
         Finds the distance between two intervals in hours.
         Expects two time interval named tuples.
-        :param self: One time interval
+        :param me: My time interval
         :param other: The other time interval
         :return: The distance between them in minutes
         """
-        my_start = self.start_time
-        my_end = self.end_time
 
+        my_midpoint = me.midpoint
+        other_midpoint = other.midpoint
+
+        my_start = me.start_time
         other_start = other.start_time
-        other_end = other.end_time
 
-        one = abs((my_start - other_end)).total_seconds() / 3600
-        two = abs((my_end - other_start).total_seconds() / 3600)
+        diff = abs((my_midpoint - other_midpoint)).total_seconds() / 3600
 
-        # Using mins so it doesn't go out of control
-        return max(1, min(6, min(one, two)))
+        # TODO make another method to distinguish between punishing or adding when the start is less
+        if my_start < other_start:
+            diff += 10
+
+        return diff
 
     def __str__(self):
         return str(self.times[0]) + ', ' + str(self.times[1])

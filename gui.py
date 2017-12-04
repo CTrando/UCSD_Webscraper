@@ -23,6 +23,7 @@ from timeutil.timeutils import TimeIntervalCollection
 
 Config.set('graphics', 'font-name', 'Times')
 Config.set('input', 'mouse', 'mouse, multitouch_on_demand')
+Config.set('graphics', 'maxfps', 30)
 
 
 class MainApp(App):
@@ -257,8 +258,6 @@ class MainApp(App):
                     day = entry[0]
                     times = entry[1]
 
-                    if len(times) != 2:
-                        continue
                     startTime = times[0].hour + times[0].minute / 60
                     endTime = times[1].hour + times[1].minute / 60
                     graph.add_class_time(day=day, time=[startTime, endTime], color=color, text=cl.data['COURSE_NUM'])
