@@ -219,26 +219,23 @@ class TimeIntervalCollection:
                (my_start <= other_start <= my_end) and (my_start <= other_end <= my_end)
 
     @staticmethod
+    def earlier_time(me, other):
+        return me.start_time < other.start_time
+
+    @staticmethod
     def distance_from(me, other):
         """
         Finds the distance between two intervals in hours.
         Expects two time interval named tuples.
         :param me: My time interval
         :param other: The other time interval
-        :return: The distance between them in minutes
+        :return: The distance between them in minutes - negative if earlier
         """
 
         my_midpoint = me.midpoint
         other_midpoint = other.midpoint
 
-        my_start = me.start_time
-        other_start = other.start_time
-
         diff = abs((my_midpoint - other_midpoint)).total_seconds() / 3600
-
-        # TODO make another method to distinguish between punishing or adding when the start is less
-        if my_start < other_start:
-            diff += 10
 
         return diff
 

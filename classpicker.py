@@ -3,6 +3,7 @@ import sqlite3
 import sys
 
 from classutil.classutils import *
+from preferences.time_preference import TimePreference
 from settings import DATABASE_PATH, DEFAULT_INTERVAL, HOME_DIR, INTERVALS
 
 """
@@ -28,6 +29,9 @@ class ClassPicker():
 
         # DP buffer for top down memoization
         self.dp_buffer = {}
+
+        # Preferences
+        self.time_pref = TimePreference()
 
         # Solution variables
         self.best_candidate = None
@@ -97,6 +101,7 @@ class ClassPicker():
         class_set = []
         # Access each preferred class in given list and store it inside class_set
         for pref_class in pref_classes:
+            # Getting the ids of each of the given classes
             self.cursor.execute("SELECT ROWID FROM DATA WHERE COURSE_NUM = ?", (pref_class,))
             # The different sections of the given class
             pref_class_sections = []
@@ -178,7 +183,9 @@ class ClassPicker():
             cl = class_set[0]
             score = .5
             for interval in INTERVALS:
+                # Check if hasn't already been calculated yet
                 if cl in self.dp_buffer:
+                    # Store interval first so can use in keyword
                     score = self.dp_buffer[(interval, cl)]
                     continue
 
@@ -215,8 +222,7 @@ class ClassPicker():
         # Return the cumulative score
         return cumulative_score
 
-    @staticmethod
-    def get_score(cl, interval):
+    def get_score(self, cl, interval):
         """
         Will return the score based on the times and intervals given.
 
@@ -225,15 +231,7 @@ class ClassPicker():
         :return: the score that we have given this class based on our heuristic
         """
         temp_score = 0
-        # If it is contained in the interval reward the class
-        if cl.inside_time(interval):
-            temp_score += 1 / cl.distance_from_interval(interval)
-        # If it does overlaps in the interval reward the set a little less
-        elif cl.overlaps_time(interval):
-            temp_score += .5 * cl.distance_from_interval(interval)
-        # Otherwise punish the set
-        else:
-            temp_score -= .1 * cl.distance_from_interval(interval)
+        temp_score += self.time_pref.get_score(cl, interval)
 
         # TODO fix the heuristic for the score based on time
         return temp_score
