@@ -12,7 +12,7 @@ PATHS
 """
 
 # Where the directory is placed
-HOME_DIR = os.getcwd()
+HOME_DIR = os.path.dirname(os.path.abspath(__file__))
 # Database directory
 DATABASE_PATH = os.path.join(HOME_DIR, 'database','data.db')
 # Image directory

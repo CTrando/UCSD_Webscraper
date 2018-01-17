@@ -90,32 +90,38 @@ class ClassPicker():
         if not self.best_candidate:
             raise RuntimeError('It appears that there is no best candidate.')
 
-    def generate_class_set(self, pref_classes):
+    def generate_class_set(self, class_ids):
         """
         Accesses the database and returns the list of classes with the corresponding course num.
-        :param pref_classes the list of classes we are trying to select
+        :param class_ids the list of classes we are trying to select
         :return The corresponding class set
         """
 
         # Where the classes will be stored
         class_set = []
         # Access each preferred class in given list and store it inside class_set
-        for pref_class in pref_classes:
-            # Getting the ids of each of the given classes
-            self.cursor.execute("SELECT ROWID FROM DATA WHERE COURSE_NUM = ?", (pref_class,))
-            # The different sections of the given class
-            pref_class_sections = []
-
-            for id_tuple in self.cursor.fetchall():
-                id_tuple = dict(id_tuple)
-                ID = id_tuple['rowid']
-                # Create a class object and add it to the sections
-                class_version = Class(self.cursor, ID)
-                pref_class_sections.append(class_version)
-
-            # Adding the section to the class set
-            class_set.append(pref_class_sections)
+        for pref_class in class_ids:
+            class_set.append(self.generate_class_versions(pref_class))
         return class_set
+
+    def generate_class_versions(self, class_id):
+        """
+        Generates a set of classes of the same version and ID.
+        For example returns all the CSE 20 classes given that ID.
+        :param class_id: The id we want, for example CSE 20
+        :return: returns all the classes with the same ID in a list
+        """
+        self.cursor.execute("SELECT ROWID FROM DATA WHERE COURSE_NUM = ?", (class_id,))
+        # The different sections of the given class
+        class_versions = []
+
+        for id_tuple in self.cursor.fetchall():
+            id_tuple = dict(id_tuple)
+            ID = id_tuple['rowid']
+            # Create a class object and add it to the sections
+            class_version = Class(self.cursor, ID)
+            class_versions.append(class_version)
+        return class_versions
 
     def get_output(self):
         print(self.best_candidate_score)
