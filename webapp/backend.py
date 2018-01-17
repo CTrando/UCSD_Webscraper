@@ -23,9 +23,15 @@ def return_db_data():
     ret_classes = [cp.generate_class_versions(i) for i in classes]
 
     cd = ClassDecoder()
-
-    ret = [[cd.default(j) for j in i] for i in ret_classes]
-    return {ret}
+    ret_dict = {}
+    index = 0
+    for cl_list in ret_classes:
+        temp_list = []
+        for cl in cl_list:
+            temp_list.append(cd.default(cl))
+        ret_dict[classes[index]] = temp_list
+        index+=1
+    return jsonify(ret_dict)
 
 
 if __name__ == '__main__':

@@ -9,10 +9,10 @@ class ClassDecoder(json.JSONEncoder):
             return ValueError("Not the correct type")
 
         subclass_decoder = SubClassDecoder()
-        subclass_str = ''
+        subclass = []
         for i in o.subclasses.values():
-            subclass_str += subclass_decoder.default(i)
-        return subclass_str
+            subclass.append(subclass_decoder.default(i))
+        return subclass
 
 
 class SubClassDecoder(json.JSONEncoder):
@@ -20,4 +20,4 @@ class SubClassDecoder(json.JSONEncoder):
         if not isinstance(o, Subclass):
             return ValueError("Not the correct type")
 
-        return json.dumps(o.data)
+        return o.data
