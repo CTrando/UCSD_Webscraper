@@ -30,7 +30,7 @@ def return_db_data():
         for cl in cl_list:
             temp_list.append(cd.default(cl))
         ret_dict[classes[index]] = temp_list
-        index+=1
+        index += 1
     return jsonify(ret_dict)
 
 
